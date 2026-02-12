@@ -6,7 +6,6 @@ import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { AppHeader } from "./components/AppHeader";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
 import { BottomNavBar } from "./components/BottomNavBar";
-import { PwaInstall } from "./components/PwaInstall";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -14,7 +13,6 @@ export const metadata: Metadata = {
   title: "PoultrySense AI",
   description: "A practical diagnostic app for poultry farmers.",
   themeColor: "#22c55e",
-  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -41,7 +39,6 @@ export default function RootLayout({
             </div>
             <Toaster />
             <BottomNavBar />
-            <PwaInstall />
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>
