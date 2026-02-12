@@ -15,8 +15,10 @@ import {
   Mic,
   Square,
   Trash2,
+  AlertTriangle,
 } from 'lucide-react';
-import { collection } from 'firebase/firestore';
+import { startOfDay } from 'date-fns';
+import { collection, query, where } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +41,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useRequireAuth } from '@/hooks/use-require-auth';
 import { FullScreenLoader } from '../components/FullScreenLoader';
-import { addDocumentNonBlocking, useFirestore } from '@/firebase';
+import {
+  addDocumentNonBlocking,
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+} from '@/firebase';
+import { Progress } from '@/components/ui/progress';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
@@ -171,6 +179,23 @@ export default function NewDiagnosisPage() {
   } = form;
 
   const diagnosisMethod = watch('diagnosisMethod');
+
+  const startOfToday = React.useMemo(() => startOfDay(new Date()), []);
+
+  const diagnosesTodayQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/diagnoses`),
+      where('timestamp', '>=', startOfToday.toISOString())
+    );
+  }, [user, firestore, startOfToday]);
+
+  const { data: diagnosesToday, isLoading: isDiagnosesLoading } =
+    useCollection(diagnosesTodayQuery);
+
+  const diagnosesMadeToday = diagnosesToday?.length ?? 0;
+  const diagnosesRemaining = Math.max(0, 10 - diagnosesMadeToday);
+  const hasReachedLimit = diagnosesRemaining <= 0;
 
   const clearImage = () => {
     setValue('image', null, { shouldValidate: true });
@@ -403,7 +428,7 @@ export default function NewDiagnosisPage() {
     }
   };
 
-  if (isAuthLoading || !user) {
+  if (isAuthLoading || !user || isDiagnosesLoading) {
     return <FullScreenLoader />;
   }
 
@@ -429,324 +454,351 @@ export default function NewDiagnosisPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <Controller
-                    name="diagnosisMethod"
-                    control={control}
-                    render={({ field }) => (
-                      <div className="space-y-2">
-                        <Label>Diagnosis Method</Label>
-                        <RadioGroup
-                          onValueChange={(
-                            value: 'image' | 'description' | 'live' | 'audio'
-                          ) => handleMethodChange(value)}
-                          value={field.value}
-                          className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-lg bg-muted p-1"
-                        >
-                          <div>
-                            <RadioGroupItem
-                              value="image"
-                              id="method-image"
-                              className="peer sr-only"
-                            />
-                            <Label
-                              htmlFor="method-image"
-                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
-                            >
-                              Upload Image
-                            </Label>
-                          </div>
-                          <div>
-                            <RadioGroupItem
-                              value="live"
-                              id="method-live"
-                              className="peer sr-only"
-                            />
-                            <Label
-                              htmlFor="method-live"
-                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
-                            >
-                              Live Capture
-                            </Label>
-                          </div>
-                          <div>
-                            <RadioGroupItem
-                              value="audio"
-                              id="method-audio"
-                              className="peer sr-only"
-                            />
-                            <Label
-                              htmlFor="method-audio"
-                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
-                            >
-                              Record Audio
-                            </Label>
-                          </div>
-                          <div>
-                            <RadioGroupItem
-                              value="description"
-                              id="method-description"
-                              className="peer sr-only"
-                            />
-                            <Label
-                              htmlFor="method-description"
-                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
-                            >
-                              Describe
-                            </Label>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    )}
+                <div className="space-y-2 mb-6">
+                  <div className="flex justify-between text-sm font-medium">
+                    <Label>Daily Usage</Label>
+                    <span className="font-semibold">
+                      {diagnosesMadeToday} / 10 used
+                    </span>
+                  </div>
+                  <Progress
+                    value={(diagnosesMadeToday / 10) * 100}
+                    className="h-2"
                   />
-
-                  {diagnosisMethod === 'image' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="image-upload">Image</Label>
-                      <div
-                        className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <input
-                          id="image-upload"
-                          ref={fileInputRef}
-                          type="file"
-                          accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                          className="hidden"
-                          onChange={handleFileChange}
-                          disabled={isLoading}
-                        />
-                        {preview ? (
-                          <>
-                            <Image
-                              src={preview}
-                              alt="Image preview"
-                              fill
-                              className="object-contain rounded-lg p-2"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-2 right-2 h-7 w-7 rounded-full z-10"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                clearImage();
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <div className="text-center">
-                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <p className="mt-2 text-sm text-muted-foreground">
-                              Click to upload or drag and drop
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              PNG, JPG, WEBP up to 5MB
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                      {errors.image && (
-                        <p className="text-sm text-destructive">
-                          {errors.image.message as string}
-                        </p>
+                </div>
+                {hasReachedLimit && (
+                  <Alert variant="destructive" className="mb-6">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Daily Limit Reached</AlertTitle>
+                    <AlertDescription>
+                      You have used all your diagnoses for today. Please come
+                      back tomorrow.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <fieldset disabled={hasReachedLimit}>
+                    <Controller
+                      name="diagnosisMethod"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="space-y-2">
+                          <Label>Diagnosis Method</Label>
+                          <RadioGroup
+                            onValueChange={(
+                              value: 'image' | 'description' | 'live' | 'audio'
+                            ) => handleMethodChange(value)}
+                            value={field.value}
+                            className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-lg bg-muted p-1"
+                          >
+                            <div>
+                              <RadioGroupItem
+                                value="image"
+                                id="method-image"
+                                className="peer sr-only"
+                              />
+                              <Label
+                                htmlFor="method-image"
+                                className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
+                              >
+                                Upload Image
+                              </Label>
+                            </div>
+                            <div>
+                              <RadioGroupItem
+                                value="live"
+                                id="method-live"
+                                className="peer sr-only"
+                              />
+                              <Label
+                                htmlFor="method-live"
+                                className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
+                              >
+                                Live Capture
+                              </Label>
+                            </div>
+                            <div>
+                              <RadioGroupItem
+                                value="audio"
+                                id="method-audio"
+                                className="peer sr-only"
+                              />
+                              <Label
+                                htmlFor="method-audio"
+                                className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
+                              >
+                                Record Audio
+                              </Label>
+                            </div>
+                            <div>
+                              <RadioGroupItem
+                                value="description"
+                                id="method-description"
+                                className="peer sr-only"
+                              />
+                              <Label
+                                htmlFor="method-description"
+                                className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
+                              >
+                                Describe
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
                       )}
-                    </div>
-                  )}
+                    />
 
-                  {diagnosisMethod === 'live' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="live-capture">Live Camera</Label>
-                      <div className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg bg-muted overflow-hidden">
-                        {preview ? (
-                          <>
-                            <Image
-                              src={preview}
-                              alt="Image preview"
-                              fill
-                              className="object-contain rounded-lg p-2"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="icon"
-                              className="absolute top-2 right-2 h-7 w-7 rounded-full z-10"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                clearImage();
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <div className="w-full h-full relative">
-                            <video
-                              ref={videoRef}
-                              className="w-full h-full object-cover"
-                              autoPlay
-                              muted
-                              playsInline
-                            />
-                            {hasCameraPermission && (
-                              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
-                                <Button
-                                  type="button"
-                                  onClick={handleCapture}
-                                  disabled={!hasCameraPermission}
-                                >
-                                  <Camera className="mr-2 h-4 w-4" />
-                                  Capture Photo
-                                </Button>
-                              </div>
-                            )}
-                            {hasCameraPermission === false && (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                                <Alert variant="destructive">
-                                  <Video className="h-4 w-4" />
-                                  <AlertTitle>
-                                    Camera Access Required
-                                  </AlertTitle>
-                                  <AlertDescription>
-                                    Please allow camera access to use this
-                                    feature.
-                                  </AlertDescription>
-                                </Alert>
-                              </div>
-                            )}
-                            {hasCameraPermission === null && (
-                              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                                <p className="mt-2 text-muted-foreground">
-                                  Requesting camera access...
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      <canvas ref={canvasRef} className="hidden" />
-                      {errors.image && (
-                        <p className="text-sm text-destructive">
-                          {errors.image.message as string}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {diagnosisMethod === 'audio' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="audio-recording">Audio Recording</Label>
-                      <div className="flex flex-col justify-center items-center w-full h-64 border-2 border-dashed rounded-lg transition-colors space-y-4">
-                        {audioUrl ? (
-                          <div className="p-4 space-y-4 text-center">
-                            <p className="font-medium">Recording Complete</p>
-                            <audio
-                              src={audioUrl}
-                              controls
-                              className="w-full"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              onClick={clearAudio}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Recording
-                            </Button>
-                          </div>
-                        ) : isRecording ? (
-                          <div className="text-center space-y-4">
-                            <Mic className="mx-auto h-16 w-16 text-destructive animate-pulse" />
-                            <p className="text-muted-foreground">
-                              Recording...
-                            </p>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              onClick={handleStopRecording}
-                            >
-                              <Square className="mr-2 h-4 w-4" />
-                              Stop Recording
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="text-center space-y-4">
-                            {hasMicPermission === false ? (
-                              <Alert variant="destructive">
-                                <Mic className="h-4 w-4" />
-                                <AlertTitle>
-                                  Microphone Access Required
-                                </AlertTitle>
-                                <AlertDescription>
-                                  Please allow microphone access to record
-                                  audio.
-                                </AlertDescription>
-                              </Alert>
-                            ) : (
-                              <>
-                                <Mic className="mx-auto h-12 w-12 text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">
-                                  Record poultry sounds (coughs, sneezes, etc.)
-                                </p>
-                                <Button
-                                  type="button"
-                                  onClick={handleStartRecording}
-                                  disabled={hasMicPermission === null}
-                                >
-                                  {hasMicPermission === null ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Mic className="mr-2 h-4 w-4" />
-                                  )}
-                                  Start Recording
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {errors.audio && (
-                        <p className="text-sm text-destructive">
-                          {errors.audio.message as string}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {diagnosisMethod === 'description' && (
-                    <div className="space-y-2">
-                      <Label htmlFor="symptom-description">
-                        Symptom Description
-                      </Label>
-                      <Controller
-                        name="symptomDescription"
-                        control={control}
-                        render={({ field }) => (
-                          <Textarea
-                            {...field}
-                            id="symptom-description"
-                            placeholder="Describe the symptoms, behavior, or any other relevant details..."
-                            className="resize-none h-64"
+                    {diagnosisMethod === 'image' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="image-upload">Image</Label>
+                        <div
+                          className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                        >
+                          <input
+                            id="image-upload"
+                            ref={fileInputRef}
+                            type="file"
+                            accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                            className="hidden"
+                            onChange={handleFileChange}
                             disabled={isLoading}
                           />
+                          {preview ? (
+                            <>
+                              <Image
+                                src={preview}
+                                alt="Image preview"
+                                fill
+                                className="object-contain rounded-lg p-2"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2 h-7 w-7 rounded-full z-10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  clearImage();
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="text-center">
+                              <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                Click to upload or drag and drop
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                PNG, JPG, WEBP up to 5MB
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        {errors.image && (
+                          <p className="text-sm text-destructive">
+                            {errors.image.message as string}
+                          </p>
                         )}
-                      />
-                      {errors.symptomDescription && (
-                        <p className="text-sm text-destructive">
-                          {errors.symptomDescription.message as string}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+
+                    {diagnosisMethod === 'live' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="live-capture">Live Camera</Label>
+                        <div className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg bg-muted overflow-hidden">
+                          {preview ? (
+                            <>
+                              <Image
+                                src={preview}
+                                alt="Image preview"
+                                fill
+                                className="object-contain rounded-lg p-2"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2 h-7 w-7 rounded-full z-10"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  clearImage();
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="w-full h-full relative">
+                              <video
+                                ref={videoRef}
+                                className="w-full h-full object-cover"
+                                autoPlay
+                                muted
+                                playsInline
+                              />
+                              {hasCameraPermission && (
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+                                  <Button
+                                    type="button"
+                                    onClick={handleCapture}
+                                    disabled={!hasCameraPermission}
+                                  >
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    Capture Photo
+                                  </Button>
+                                </div>
+                              )}
+                              {hasCameraPermission === false && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                                  <Alert variant="destructive">
+                                    <Video className="h-4 w-4" />
+                                    <AlertTitle>
+                                      Camera Access Required
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                      Please allow camera access to use this
+                                      feature.
+                                    </AlertDescription>
+                                  </Alert>
+                                </div>
+                              )}
+                              {hasCameraPermission === null && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                                  <p className="mt-2 text-muted-foreground">
+                                    Requesting camera access...
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <canvas ref={canvasRef} className="hidden" />
+                        {errors.image && (
+                          <p className="text-sm text-destructive">
+                            {errors.image.message as string}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {diagnosisMethod === 'audio' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="audio-recording">
+                          Audio Recording
+                        </Label>
+                        <div className="flex flex-col justify-center items-center w-full h-64 border-2 border-dashed rounded-lg transition-colors space-y-4">
+                          {audioUrl ? (
+                            <div className="p-4 space-y-4 text-center">
+                              <p className="font-medium">Recording Complete</p>
+                              <audio
+                                src={audioUrl}
+                                controls
+                                className="w-full"
+                              />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={clearAudio}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Recording
+                              </Button>
+                            </div>
+                          ) : isRecording ? (
+                            <div className="text-center space-y-4">
+                              <Mic className="mx-auto h-16 w-16 text-destructive animate-pulse" />
+                              <p className="text-muted-foreground">
+                                Recording...
+                              </p>
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                onClick={handleStopRecording}
+                              >
+                                <Square className="mr-2 h-4 w-4" />
+                                Stop Recording
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-4">
+                              {hasMicPermission === false ? (
+                                <Alert variant="destructive">
+                                  <Mic className="h-4 w-4" />
+                                  <AlertTitle>
+                                    Microphone Access Required
+                                  </AlertTitle>
+                                  <AlertDescription>
+                                    Please allow microphone access to record
+                                    audio.
+                                  </AlertDescription>
+                                </Alert>
+                              ) : (
+                                <>
+                                  <Mic className="mx-auto h-12 w-12 text-muted-foreground" />
+                                  <p className="text-sm text-muted-foreground">
+                                    Record poultry sounds (coughs, sneezes,
+                                    etc.)
+                                  </p>
+                                  <Button
+                                    type="button"
+                                    onClick={handleStartRecording}
+                                    disabled={hasMicPermission === null}
+                                  >
+                                    {hasMicPermission === null ? (
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Mic className="mr-2 h-4 w-4" />
+                                    )}
+                                    Start Recording
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {errors.audio && (
+                          <p className="text-sm text-destructive">
+                            {errors.audio.message as string}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {diagnosisMethod === 'description' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="symptom-description">
+                          Symptom Description
+                        </Label>
+                        <Controller
+                          name="symptomDescription"
+                          control={control}
+                          render={({ field }) => (
+                            <Textarea
+                              {...field}
+                              id="symptom-description"
+                              placeholder="Describe the symptoms, behavior, or any other relevant details..."
+                              className="resize-none h-64"
+                              disabled={isLoading}
+                            />
+                          )}
+                        />
+                        {errors.symptomDescription && (
+                          <p className="text-sm text-destructive">
+                            {errors.symptomDescription.message as string}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </fieldset>
 
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading || !isValid}
+                    disabled={isLoading || !isValid || hasReachedLimit}
                   >
                     {isLoading ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
