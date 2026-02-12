@@ -38,32 +38,32 @@ body {
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 220 25% 10%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 220 25% 10%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 220 25% 10%;
     --popover-foreground: 210 40% 98%;
     --primary: 142.1 80% 60%;
     --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 220 25% 13%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 220 25% 13%;
     --muted-foreground: 215 20.2% 65.1%;
     --accent: 142.1 70.6% 45.3%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 220 25% 13%;
+    --input: 220 25% 13%;
     --ring: 142.1 70.6% 45.3%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --gradient-start: 220 25% 5%;
-    --gradient-end: 240 20% 10%;
+    --gradient-start: 220 25% 10%;
+    --gradient-end: 240 20% 15%;
   }
 }
 
