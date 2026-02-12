@@ -1,0 +1,154 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a registered user of the PoultrySense AI application. This entity stores user profile information, but excludes authentication credentials.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address, used for identification. Authentication details are managed externally.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the user."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Diagnosis": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Diagnosis",
+      "type": "object",
+      "description": "Represents a single diagnostic session or record for poultry, including farmer input, AI analysis, and recommendations.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Diagnosis entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who submitted this diagnosis. (Relationship: User 1:N Diagnosis)"
+        },
+        "symptomDescription": {
+          "type": "string",
+          "description": "The textual description of poultry symptoms provided by the farmer."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "An array of URLs pointing to the images of affected poultry uploaded by the farmer.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "aiDiagnosisResult": {
+          "type": "string",
+          "description": "The primary diagnostic outcome or potential disease identified by the AI."
+        },
+        "confidenceLevel": {
+          "type": "number",
+          "description": "A numerical value (e.g., 0.0 to 1.0) indicating the AI's confidence in its diagnosis."
+        },
+        "identifiedIssues": {
+          "type": "array",
+          "description": "A list of specific issues or conditions identified by the AI in addition to the main diagnosis.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recommendedNextSteps": {
+          "type": "string",
+          "description": "Practical, actionable advice and treatment recommendations generated based on the diagnosis."
+        },
+        "diagnosisTimestamp": {
+          "type": "string",
+          "description": "Date and time when the diagnosis was performed.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "symptomDescription",
+        "imageUrls",
+        "aiDiagnosisResult",
+        "confidenceLevel",
+        "identifiedIssues",
+        "recommendedNextSteps",
+        "diagnosisTimestamp"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Each document's ID is the Firebase Authentication UID of the user. Includes denormalized 'id' matching the document ID for authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Authentication UID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/diagnoses/{diagnosisId}",
+        "definition": {
+          "entityName": "Diagnosis",
+          "schema": {
+            "$ref": "#/backend/entities/Diagnosis"
+          },
+          "description": "Stores individual diagnostic records for a specific user. This subcollection uses path-based ownership. Documents include 'userId' as a denormalized field, reinforcing authorization independence and simplifying security rules by allowing direct ownership checks without parent document lookups.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique Firebase Authentication UID of the user who owns this diagnosis."
+            },
+            {
+              "name": "diagnosisId",
+              "description": "The unique identifier for a specific diagnosis record."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The recommended Firestore structure prioritizes strict authorization independence and clear ownership through path-based segregation. Each user's data, including their profile and diagnostic records, is nested under their unique user ID. This design strategy ensures that security rules are simple, robust, and easily debuggable, without relying on `get()` operations for authorization.\n\n**Authorization Independence:**\n1.  **User Profiles:** Each `User` document is stored at `/users/{userId}`. The `{userId}` wildcard in the path directly corresponds to the authenticated user's `request.auth.uid`. This allows security rules to instantly verify ownership by comparing `request.auth.uid` with the `userId` in the path, eliminating any need to fetch parent documents or external data for authorization.\n2.  **Diagnosis Records:** `Diagnosis` documents are stored as a subcollection under the respective user: `/users/{userId}/diagnoses/{diagnosisId}`. The `Diagnosis` entity schema includes a `userId` field. This field acts as a denormalized authorization context within the document itself. Even though the path already provides the `userId` for ownership verification (i.e., `request.auth.uid == userId` in the path), including `userId` in the document ensures authorization independence. Rules can verify `request.auth.uid == userId` from the path for the collection or directly from the document's `userId` field (e.g., `resource.data.userId`) for individual document access, avoiding `get()` calls to a parent `User` document.\n\n**QAPs (Rules are not Filters) Support:**\nThis structure inherently supports Query-As-Permissions (QAPs) by applying structural segregation:\n1.  **User-Specific Data:** All `Diagnosis` records for a particular user are confined to their dedicated subcollection (`/users/{userId}/diagnoses`). When a user attempts to `list` documents from this path, the Firestore security rules can simply enforce that `userId` in the path must match `request.auth.uid`. This ensures that `list` operations are implicitly filtered by the user's identity, meaning the database query itself (e.g., `db.collection('users').doc(auth.uid).collection('diagnoses').get()`) is already constrained by the authenticated user's ID. The security rule then only needs to validate this path match, ensuring that no unauthorized data is ever returned, and the rule does not act as an inefficient client-side filter. There is no possibility of a user querying `/users/{anotherUserId}/diagnoses` and relying on rules to filter the results; such a query would be outright denied at the collection level based on the path itself.\n\nBy embedding ownership information directly in the document paths and, redundantly, within the documents themselves, this design creates a secure, scalable, and easy-to-manage Firestore structure that aligns perfectly with the core design principles."
+  }
+}
