@@ -6,7 +6,7 @@ export function PoultrySenseLogo() {
       <div className="bg-primary text-primary-foreground p-2 rounded-lg">
         <Feather className="h-6 w-6" />
       </div>
-      <span className="font-bold text-lg text-primary">PoultrySense AI</span>
+      <span className="font-bold text-lg text-primary hidden md:inline">PoultrySense AI</span>
     </div>
   );
 }
