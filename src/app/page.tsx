@@ -22,6 +22,7 @@ import { diagnosePoultryAction } from "@/app/actions";
 import type { Diagnosis } from "@/lib/types";
 import { DiagnosisResult } from "@/app/components/DiagnosisResult";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = [
@@ -31,19 +32,47 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/webp",
 ];
 
-const diagnosisSchema = z.object({
-  symptomDescription: z.string().optional(),
-  image: z
-    .any()
-    .refine((file) => {
-      if (!file) return true;
-      return file.size <= MAX_FILE_SIZE;
-    }, `Max image size is 5MB.`)
-    .refine((file) => {
-      if (!file) return true;
-      return ACCEPTED_IMAGE_TYPES.includes(file.type);
-    }, "Only .jpg, .jpeg, .png and .webp formats are supported."),
-});
+const diagnosisSchema = z
+  .object({
+    diagnosisMethod: z.enum(["image", "description"]),
+    symptomDescription: z.string().optional(),
+    image: z.any().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.diagnosisMethod === "image") {
+      if (!data.image) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please upload an image.",
+          path: ["image"],
+        });
+        return;
+      }
+      if (data.image.size > MAX_FILE_SIZE) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Max image size is 5MB.`,
+          path: ["image"],
+        });
+      }
+      if (!ACCEPTED_IMAGE_TYPES.includes(data.image.type)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Only .jpg, .jpeg, .png and .webp formats are supported.",
+          path: ["image"],
+        });
+      }
+    }
+    if (data.diagnosisMethod === "description") {
+      if (!data.symptomDescription || data.symptomDescription.trim().length === 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please describe the symptoms.",
+          path: ["symptomDescription"],
+        });
+      }
+    }
+  });
 
 type DiagnosisFormValues = z.infer<typeof diagnosisSchema>;
 
@@ -58,6 +87,7 @@ export default function Home() {
   const form = useForm<DiagnosisFormValues>({
     resolver: zodResolver(diagnosisSchema),
     defaultValues: {
+      diagnosisMethod: "image",
       symptomDescription: "",
     },
   });
@@ -69,7 +99,8 @@ export default function Home() {
     setValue,
     formState: { errors },
   } = form;
-  const imageFile = watch("image");
+  
+  const diagnosisMethod = watch("diagnosisMethod");
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -92,20 +123,11 @@ export default function Home() {
   };
 
   const onSubmit = async (data: DiagnosisFormValues) => {
-    if (!data.image && !data.symptomDescription) {
-      toast({
-        variant: "destructive",
-        title: "Input Required",
-        description: "Please upload an image or describe the symptoms.",
-      });
-      return;
-    }
-
     setIsLoading(true);
     setResult(null);
 
     let photoDataUri: string | undefined;
-    if (data.image) {
+    if (data.diagnosisMethod === "image" && data.image) {
       photoDataUri = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -162,28 +184,60 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="image-upload">Upload Image (Optional)</Label>
-                    <div
-                      className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <input
-                        id="image-upload"
-                        ref={fileInputRef}
-                        type="file"
-                        accept={ACCEPTED_IMAGE_TYPES.join(",")}
-                        className="hidden"
-                        onChange={handleFileChange}
-                      />
-                      {preview ? (
-                        <>
-                          <Image
-                            src={preview}
-                            alt="Image preview"
-                            fill
-                            className="object-contain rounded-lg p-2"
-                          />
+                 <Controller
+                    name="diagnosisMethod"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        <Label>Diagnosis Method</Label>
+                        <RadioGroup
+                          onValueChange={(value: 'image' | 'description') => {
+                            field.onChange(value);
+                            if (value === 'image') {
+                              setValue('symptomDescription', '', { shouldValidate: false });
+                            } else {
+                              removeImage();
+                            }
+                          }}
+                          value={field.value}
+                          className="flex space-x-4 pt-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="image" id="method-image" />
+                            <Label htmlFor="method-image" className="font-normal cursor-pointer">Upload Image</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="description" id="method-description" />
+                            <Label htmlFor="method-description" className="font-normal cursor-pointer">Describe Symptoms</Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    )}
+                  />
+
+                  {diagnosisMethod === 'image' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="image-upload">Image</Label>
+                      <div
+                        className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary transition-colors"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <input
+                          id="image-upload"
+                          ref={fileInputRef}
+                          type="file"
+                          accept={ACCEPTED_IMAGE_TYPES.join(",")}
+                          className="hidden"
+                          onChange={handleFileChange}
+                        />
+                        {preview ? (
+                          <>
+                            <Image
+                              src={preview}
+                              alt="Image preview"
+                              fill
+                              className="object-contain rounded-lg p-2"
+                            />
                            <Button
                             type="button"
                             variant="destructive"
@@ -196,36 +250,39 @@ export default function Home() {
                           >
                             <X className="h-4 w-4" />
                           </Button>
-                        </>
-                      ) : (
-                        <div className="text-center">
-                          <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                          <p className="mt-2 text-sm text-muted-foreground">
-                            Click to upload or drag and drop
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            PNG, JPG, WEBP up to 5MB
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                          </>
+                        ) : (
+                          <div className="text-center">
+                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <p className="mt-2 text-sm text-muted-foreground">
+                              Click to upload or drag and drop
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              PNG, JPG, WEBP up to 5MB
+                            </p>
+                          </div>
+                        )}
+                      </div>
                      {errors.image && <p className="text-sm text-destructive">{errors.image.message as string}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Controller
-                      name="symptomDescription"
-                      control={control}
-                      render={({ field }) => (
-                        <Textarea
-                          {...field}
-                          placeholder="Describe the symptoms, behavior, or any other relevant details..."
-                          rows={5}
-                          className="resize-none"
-                        />
-                      )}
-                    />
-                  </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="symptom-description">Symptom Description</Label>
+                      <Controller
+                        name="symptomDescription"
+                        control={control}
+                        render={({ field }) => (
+                          <Textarea
+                            {...field}
+                            id="symptom-description"
+                            placeholder="Describe the symptoms, behavior, or any other relevant details..."
+                            className="resize-none h-64"
+                          />
+                        )}
+                      />
+                      {errors.symptomDescription && <p className="text-sm text-destructive">{errors.symptomDescription.message as string}</p>}
+                    </div>
+                  )}
 
                   <Button
                     type="submit"
