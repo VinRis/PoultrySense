@@ -18,7 +18,7 @@ export function BottomNavBar() {
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/new-diagnosis', label: 'New Diagnosis', icon: PlusSquare },
+    { href: '/new-diagnosis', label: 'Diagnosis', icon: PlusSquare },
     { href: '/profile', label: 'Profile', icon: User },
   ];
 
