@@ -15,7 +15,13 @@ import {
 import { isToday } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
@@ -86,6 +92,9 @@ export default function Home() {
   const [history, setHistory] = useLocalStorage<Diagnosis[]>("diagnosisHistory", []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  const diagnosesToday = history.filter((d) => isToday(new Date(d.timestamp))).length;
+  const diagnosesLeft = Math.max(0, 10 - diagnosesToday);
+
   const form = useForm<DiagnosisFormValues>({
     resolver: zodResolver(diagnosisSchema),
     defaultValues: {
@@ -125,9 +134,7 @@ export default function Home() {
   };
 
   const onSubmit = async (data: DiagnosisFormValues) => {
-    const diagnosesToday = history.filter((d) => isToday(new Date(d.timestamp))).length;
-
-    if (diagnosesToday >= 10) {
+    if (diagnosesLeft <= 0) {
       toast({
         variant: "destructive",
         title: "Daily Limit Reached",
@@ -194,6 +201,11 @@ export default function Home() {
             <Card className="w-full">
               <CardHeader>
                 <CardTitle>New Diagnosis</CardTitle>
+                <CardDescription>
+                  You have {diagnosesLeft}{" "}
+                  {diagnosesLeft === 1 ? "diagnosis" : "diagnoses"} left for
+                  today.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
