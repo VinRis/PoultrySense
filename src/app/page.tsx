@@ -91,6 +91,11 @@ export default function Home() {
   const { toast } = useToast();
   const [history, setHistory] = useLocalStorage<Diagnosis[]>("diagnosisHistory", []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const diagnosesToday = history.filter((d) => isToday(new Date(d.timestamp))).length;
   const diagnosesLeft = Math.max(0, 10 - diagnosesToday);
@@ -202,9 +207,15 @@ export default function Home() {
               <CardHeader>
                 <CardTitle>New Diagnosis</CardTitle>
                 <CardDescription>
-                  You have {diagnosesLeft}{" "}
-                  {diagnosesLeft === 1 ? "diagnosis" : "diagnoses"} left for
-                  today.
+                  {isClient ? (
+                    <>
+                      You have {diagnosesLeft}{" "}
+                      {diagnosesLeft === 1 ? "diagnosis" : "diagnoses"} left for
+                      today.
+                    </>
+                  ) : (
+                    "Checking daily limit..."
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -322,7 +333,7 @@ export default function Home() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading}
+                    disabled={isLoading || !isClient}
                   >
                     <Send className="mr-2 h-4 w-4" />
                     Diagnose
