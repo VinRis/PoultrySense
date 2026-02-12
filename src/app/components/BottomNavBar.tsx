@@ -3,18 +3,29 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, PlusSquare, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
 export function BottomNavBar() {
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/new-diagnosis', label: 'New Diagnosis', icon: PlusSquare },
     { href: '/profile', label: 'Profile', icon: User },
   ];
+
+  if (!isClient) {
+    // Return null on the server to avoid hydration mismatch
+    return null;
+  }
 
   // Do not show nav items on auth pages
   if (['/login', '/signup'].includes(pathname)) {
