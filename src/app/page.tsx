@@ -102,6 +102,7 @@ export default function Home() {
 
   const form = useForm<DiagnosisFormValues>({
     resolver: zodResolver(diagnosisSchema),
+    mode: "onChange",
     defaultValues: {
       diagnosisMethod: "image",
       symptomDescription: "",
@@ -113,7 +114,7 @@ export default function Home() {
     control,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isValid },
   } = form;
   
   const diagnosisMethod = watch("diagnosisMethod");
@@ -333,7 +334,7 @@ export default function Home() {
                   <Button
                     type="submit"
                     className="w-full"
-                    disabled={isLoading || !isClient}
+                    disabled={isLoading || !isClient || !isValid}
                   >
                     <Send className="mr-2 h-4 w-4" />
                     Diagnose
