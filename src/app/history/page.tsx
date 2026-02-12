@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { History as HistoryIcon, Trash2 } from "lucide-react";
+import { LayoutDashboard, Trash2 } from "lucide-react";
 
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
 import type { Diagnosis } from "@/lib/types";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { DashboardCharts } from "../components/DashboardCharts";
 
 export default function HistoryPage() {
   const [history, setHistory] = useLocalStorage<Diagnosis[]>(
@@ -44,19 +45,39 @@ export default function HistoryPage() {
   };
 
   if (!isClient) {
-    return null;
+    return (
+       <div className="p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto animate-pulse">
+            <div className="h-10 bg-muted rounded-md w-1/4 mb-4"></div>
+            <div className="h-6 bg-muted rounded-md w-1/3 mb-8"></div>
+            <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="lg:col-span-2 h-80 bg-muted rounded-lg"></div>
+              <div className="h-80 bg-muted rounded-lg"></div>
+              <div className="space-y-6">
+                <div className="h-32 bg-muted rounded-lg"></div>
+                <div className="h-32 bg-muted rounded-lg"></div>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="h-20 bg-muted rounded-lg"></div>
+              <div className="h-20 bg-muted rounded-lg"></div>
+              <div className="h-20 bg-muted rounded-lg"></div>
+            </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
             <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl">
-              Diagnosis History
+              Analytics Dashboard
             </h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              Review your past diagnostic reports.
+              Review trends and past diagnostic reports.
             </p>
           </div>
           {history.length > 0 && (
@@ -85,9 +106,12 @@ export default function HistoryPage() {
           )}
         </header>
 
+        <DashboardCharts diagnoses={history} />
+
+        <h2 className="text-3xl font-bold tracking-tight mb-4">Diagnosis Log</h2>
         {history.length === 0 ? (
           <div className="text-center py-16 border-2 border-dashed rounded-lg">
-            <HistoryIcon className="mx-auto h-12 w-12 text-muted-foreground" />
+            <LayoutDashboard className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-medium">No History Found</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Your past diagnoses will appear here.

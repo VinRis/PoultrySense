@@ -4,5 +4,6 @@ export interface Diagnosis extends GeneratePoultryDiagnosisOutput {
   id: string;
   timestamp: string;
   photoDataUri?: string;
+  audioDataUri?: string;
   symptomDescription?: string;
 }

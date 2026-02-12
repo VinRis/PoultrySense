@@ -2,6 +2,7 @@
 
 import { generatePoultryDiagnosis } from "@/ai/flows/generate-poultry-diagnosis";
 import { generateTreatmentRecommendations } from "@/ai/flows/generate-treatment-recommendations";
+import { generateAudioDiagnosis } from "@/ai/flows/generate-audio-diagnosis";
 import { z } from "zod";
 
 const DiagnosePoultryInput = z.object({
@@ -27,5 +28,16 @@ export async function getRecommendationsAction(
   input: z.infer<typeof GetRecommendationsInput>
 ) {
   const result = await generateTreatmentRecommendations(input);
+  return result;
+}
+
+const DiagnosePoultryByAudioInput = z.object({
+  audioDataUri: z.string(),
+});
+
+export async function diagnosePoultryByAudioAction(
+  input: z.infer<typeof DiagnosePoultryByAudioInput>
+) {
+  const result = await generateAudioDiagnosis(input);
   return result;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, History } from "lucide-react";
+import { Home, LayoutDashboard } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,16 @@ export function AppHeader() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: Home },
-    { href: "/history", label: "History", icon: History },
+    { href: "/", label: "New Diagnosis", icon: Home },
+    { href: "/history", label: "Dashboard", icon: LayoutDashboard },
   ];
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6">
       <div className="flex items-center gap-6">
-        <PoultrySenseLogo />
+        <Link href="/" aria-label="Home">
+          <PoultrySenseLogo />
+        </Link>
         <nav className="hidden md:flex items-center gap-1">
           {navItems.map((item) => (
             <Button

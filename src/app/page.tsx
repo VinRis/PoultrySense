@@ -10,10 +10,12 @@ import {
   UploadCloud,
   Send,
   Loader2,
-  Image as ImageIcon,
   X,
   Camera,
   Video,
+  Mic,
+  Square,
+  Trash2,
 } from "lucide-react";
 import { isToday } from "date-fns";
 
@@ -28,27 +30,29 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
-import { diagnosePoultryAction } from "@/app/actions";
+import { diagnosePoultryAction, diagnosePoultryByAudioAction } from "@/app/actions";
 import type { Diagnosis } from "@/lib/types";
 import { DiagnosisResult } from "@/app/components/DiagnosisResult";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/webp",
 ];
+const ACCEPTED_AUDIO_TYPES = ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav", "audio/mpeg"];
 
 const diagnosisSchema = z
   .object({
-    diagnosisMethod: z.enum(["image", "description", "live"]),
+    diagnosisMethod: z.enum(["image", "description", "live", "audio"]),
     symptomDescription: z.string().optional(),
     image: z.any().optional(),
+    audio: z.any().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.diagnosisMethod === "image" || data.diagnosisMethod === "live") {
@@ -90,6 +94,30 @@ const diagnosisSchema = z
         });
       }
     }
+    if (data.diagnosisMethod === "audio") {
+      if (!data.audio) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please record or upload audio.",
+          path: ["audio"],
+        });
+        return;
+      }
+      if (data.audio.size > MAX_AUDIO_SIZE) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Max audio size is 10MB.`,
+          path: ["audio"],
+        });
+      }
+      if (!ACCEPTED_AUDIO_TYPES.includes(data.audio.type)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Unsupported audio format.",
+          path: ["audio"],
+        });
+      }
+    }
   });
 
 type DiagnosisFormValues = z.infer<typeof diagnosisSchema>;
@@ -111,6 +139,12 @@ export default function Home() {
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
+  // Audio recording state
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [audioUrl, setAudioUrl] = React.useState<string | null>(null);
+  const [hasMicPermission, setHasMicPermission] = React.useState<boolean|null>(null);
+
   React.useEffect(() => {
     setIsClient(true);
   }, []);
@@ -125,7 +159,6 @@ export default function Home() {
     mode: "onChange",
     defaultValues: {
       diagnosisMethod: "image",
-      symptomDescription: "",
     },
   });
 
@@ -139,6 +172,31 @@ export default function Home() {
 
   const diagnosisMethod = watch("diagnosisMethod");
 
+  const clearImage = () => {
+    setValue("image", null, { shouldValidate: true });
+    setPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const clearAudio = () => {
+    setValue("audio", null, { shouldValidate: true });
+    setAudioUrl(null);
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const handleMethodChange = (value: "image" | "description" | "live" | "audio") => {
+    setValue("diagnosisMethod", value, { shouldValidate: false });
+    clearImage();
+    clearAudio();
+    setValue("symptomDescription", "", { shouldValidate: false });
+  };
+
+
+  // Camera Effect
   React.useEffect(() => {
     const streamCurrent = videoRef.current?.srcObject as MediaStream | null;
     if (diagnosisMethod !== 'live' || preview) {
@@ -179,13 +237,6 @@ export default function Home() {
     };
   }, [diagnosisMethod, preview, toast]);
 
-  const clearImage = () => {
-    setValue("image", null, { shouldValidate: true });
-    setPreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
   
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -221,6 +272,49 @@ export default function Home() {
     }
   };
 
+  // Audio recording handlers
+  const handleStartRecording = async () => {
+    try {
+      setHasMicPermission(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setHasMicPermission(true);
+      
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+      
+      const audioChunks: Blob[] = [];
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+      
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        setAudioUrl(audioUrl);
+        setValue("audio", audioBlob, { shouldValidate: true });
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      setHasMicPermission(false);
+      toast({
+        variant: "destructive",
+        title: "Microphone Access Denied",
+        description: "Please enable microphone permissions in your browser settings.",
+      });
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
   const onSubmit = async (data: DiagnosisFormValues) => {
     if (diagnosesLeft <= 0) {
       toast({
@@ -234,32 +328,53 @@ export default function Home() {
 
     setIsLoading(true);
     setResult(null);
-
-    let photoDataUri: string | undefined;
-    if ((data.diagnosisMethod === "image" || data.diagnosisMethod === "live") && data.image) {
-      photoDataUri = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(data.image);
-      });
-    }
-
+    
     try {
-      const diagnosisResult = await diagnosePoultryAction({
-        photoDataUri,
-        symptomDescription: data.symptomDescription,
-      });
-
-      const newDiagnosis: Diagnosis = {
-        ...diagnosisResult,
+      let diagnosisResult;
+      const baseDiagnosis: Omit<Diagnosis, keyof z.infer<typeof diagnosisSchema>> = {
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
-        symptomDescription: data.symptomDescription,
-        photoDataUri,
       };
 
-      setResult(newDiagnosis);
-      setHistory((prevHistory) => [newDiagnosis, ...prevHistory]);
+      if (data.diagnosisMethod === "audio" && data.audio) {
+        const audioDataUri = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(data.audio);
+        });
+        diagnosisResult = await diagnosePoultryByAudioAction({ audioDataUri });
+        const newDiagnosis: Diagnosis = {
+          ...baseDiagnosis,
+          ...diagnosisResult,
+          audioDataUri,
+        };
+        setResult(newDiagnosis);
+        setHistory((prev) => [newDiagnosis, ...prev]);
+
+      } else {
+        let photoDataUri: string | undefined;
+        if ((data.diagnosisMethod === "image" || data.diagnosisMethod === "live") && data.image) {
+          photoDataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(data.image);
+          });
+        }
+        diagnosisResult = await diagnosePoultryAction({
+          photoDataUri,
+          symptomDescription: data.symptomDescription,
+        });
+
+        const newDiagnosis: Diagnosis = {
+          ...baseDiagnosis,
+          ...diagnosisResult,
+          symptomDescription: data.symptomDescription,
+          photoDataUri,
+        };
+        setResult(newDiagnosis);
+        setHistory((prevHistory) => [newDiagnosis, ...prevHistory]);
+      }
+
     } catch (error) {
       console.error("Diagnosis failed:", error);
       toast({
@@ -311,19 +426,9 @@ export default function Home() {
                       <div className="space-y-2">
                         <Label>Diagnosis Method</Label>
                         <RadioGroup
-                          onValueChange={(value: "image" | "description" | "live") => {
-                            if (value === 'description') {
-                              clearImage();
-                            } else {
-                              setValue('symptomDescription', '', { shouldValidate: false });
-                              if (value !== field.value) {
-                                clearImage();
-                              }
-                            }
-                            field.onChange(value);
-                          }}
+                          onValueChange={(value: "image" | "description" | "live" | "audio") => handleMethodChange(value)}
                           value={field.value}
-                          className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1"
+                          className="grid grid-cols-2 md:grid-cols-4 gap-2 rounded-lg bg-muted p-1"
                         >
                            <div>
                             <RadioGroupItem value="image" id="method-image" className="peer sr-only" />
@@ -343,6 +448,15 @@ export default function Home() {
                               Live Capture
                             </Label>
                           </div>
+                           <div>
+                            <RadioGroupItem value="audio" id="method-audio" className="peer sr-only" />
+                            <Label
+                              htmlFor="method-audio"
+                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
+                            >
+                              Record Audio
+                            </Label>
+                          </div>
                           <div>
                             <RadioGroupItem value="description" id="method-description" className="peer sr-only" />
                             <Label
@@ -357,7 +471,7 @@ export default function Home() {
                     )}
                   />
 
-                  {diagnosisMethod === 'image' ? (
+                  {diagnosisMethod === 'image' && (
                     <div className="space-y-2">
                       <Label htmlFor="image-upload">Image</Label>
                       <div
@@ -408,7 +522,9 @@ export default function Home() {
                       </div>
                      {errors.image && <p className="text-sm text-destructive">{errors.image.message as string}</p>}
                     </div>
-                  ) : diagnosisMethod === 'live' ? (
+                  )}
+
+                  {diagnosisMethod === 'live' && (
                     <div className="space-y-2">
                       <Label htmlFor="live-capture">Live Camera</Label>
                       <div className="relative flex justify-center items-center w-full h-64 border-2 border-dashed rounded-lg bg-muted overflow-hidden">
@@ -467,7 +583,58 @@ export default function Home() {
                       <canvas ref={canvasRef} className="hidden" />
                       {errors.image && <p className="text-sm text-destructive">{errors.image.message as string}</p>}
                     </div>
-                  ) : (
+                  )}
+
+                  {diagnosisMethod === "audio" && (
+                    <div className="space-y-2">
+                       <Label htmlFor="audio-recording">Audio Recording</Label>
+                      <div className="flex flex-col justify-center items-center w-full h-64 border-2 border-dashed rounded-lg transition-colors space-y-4">
+                        {audioUrl ? (
+                          <div className="p-4 space-y-4 text-center">
+                            <p className="font-medium">Recording Complete</p>
+                            <audio src={audioUrl} controls className="w-full" />
+                            <Button type="button" variant="destructive" onClick={clearAudio}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Recording
+                            </Button>
+                          </div>
+                        ) : isRecording ? (
+                          <div className="text-center space-y-4">
+                             <Mic className="mx-auto h-16 w-16 text-destructive animate-pulse" />
+                             <p className="text-muted-foreground">Recording...</p>
+                            <Button type="button" variant="destructive" onClick={handleStopRecording}>
+                              <Square className="mr-2 h-4 w-4" />
+                              Stop Recording
+                            </Button>
+                          </div>
+                        ) : (
+                           <div className="text-center space-y-4">
+                            {hasMicPermission === false ? (
+                               <Alert variant="destructive">
+                                  <Mic className="h-4 w-4" />
+                                  <AlertTitle>Microphone Access Required</AlertTitle>
+                                  <AlertDescription>
+                                    Please allow microphone access to record audio.
+                                  </AlertDescription>
+                                </Alert>
+                            ) : (
+                              <>
+                                <Mic className="mx-auto h-12 w-12 text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">Record poultry sounds (coughs, sneezes, etc.)</p>
+                                <Button type="button" onClick={handleStartRecording} disabled={hasMicPermission === null}>
+                                   {hasMicPermission === null ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Mic className="mr-2 h-4 w-4" />}
+                                  Start Recording
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {errors.audio && <p className="text-sm text-destructive">{errors.audio.message as string}</p>}
+                    </div>
+                  )}
+
+                  {diagnosisMethod === "description" && (
                     <div className="space-y-2">
                       <Label htmlFor="symptom-description">Symptom Description</Label>
                       <Controller
@@ -531,4 +698,3 @@ export default function Home() {
     </div>
   );
 }
-
