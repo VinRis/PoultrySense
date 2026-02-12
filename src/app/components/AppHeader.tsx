@@ -28,7 +28,7 @@ export function AppHeader() {
               asChild
               variant="ghost"
               className={cn(
-                "text-muted-foreground transition-colors hover:text-primary",
+                "text-muted-foreground transition-colors",
                 pathname === item.href && "font-semibold text-primary"
               )}
             >
