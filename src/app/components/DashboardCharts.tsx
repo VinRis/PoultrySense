@@ -61,13 +61,13 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
       });
 
     const recentActivityData = new Map<string, number>();
-    for (let i = 6; i >= 0; i--) {
+    for (let i = 4; i >= 0; i--) {
       const date = subDays(new Date(), i);
       recentActivityData.set(format(date, "MMM d"), 0);
     }
     diagnoses.forEach(d => {
       const date = startOfDay(parseISO(d.timestamp));
-      if (date >= subDays(new Date(), 6)) {
+      if (date >= subDays(new Date(), 4)) {
         const formattedDate = format(date, "MMM d");
         if (recentActivityData.has(formattedDate)) {
           recentActivityData.set(formattedDate, (recentActivityData.get(formattedDate) || 0) + 1);
@@ -101,7 +101,7 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
       <Card className="md:col-span-2">
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
           <CardTitle className="text-lg md:text-xl">Recent Activity</CardTitle>
-          <CardDescription>Number of diagnoses over the last 7 days.</CardDescription>
+          <CardDescription>Number of diagnoses over the last 5 days.</CardDescription>
         </CardHeader>
         <CardContent className="p-2 pt-0 sm:p-4 sm:pt-0">
           <ChartContainer
