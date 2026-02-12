@@ -1,13 +1,66 @@
 "use client";
 
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Home, History } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
+import { PoultrySenseLogo } from "./PoultrySenseLogo";
 
 export function AppHeader() {
+  const pathname = usePathname();
+
+  const navItems = [
+    { href: "/", label: "Dashboard", icon: Home },
+    { href: "/history", label: "History", icon: History },
+  ];
+
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-sm md:justify-end">
-      <SidebarTrigger className="md:hidden" />
-      <ThemeToggle />
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6">
+      <div className="flex items-center gap-6">
+        <PoultrySenseLogo />
+        <nav className="hidden md:flex items-center gap-1">
+          {navItems.map((item) => (
+            <Button
+              key={item.href}
+              asChild
+              variant="ghost"
+              className={cn(
+                "text-muted-foreground transition-colors hover:text-primary",
+                pathname === item.href && "font-semibold text-primary"
+              )}
+            >
+              <Link href={item.href}>{item.label}</Link>
+            </Button>
+          ))}
+        </nav>
+      </div>
+
+      <div className="flex items-center gap-2">
+        {/* Mobile Nav */}
+        <nav className="flex md:hidden items-center">
+          {navItems.map((item) => (
+            <Button
+              key={item.href}
+              asChild
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "text-muted-foreground",
+                pathname === item.href && "text-primary"
+              )}
+            >
+              <Link href={item.href}>
+                <item.icon className="h-5 w-5" />
+                <span className="sr-only">{item.label}</span>
+              </Link>
+            </Button>
+          ))}
+        </nav>
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

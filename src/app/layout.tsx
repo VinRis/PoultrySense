@@ -2,12 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarInset,
-} from "@/components/ui/sidebar";
-import { AppSidebar } from "@/app/components/AppSidebar";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { AppHeader } from "./components/AppHeader";
 
@@ -35,15 +29,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SidebarProvider>
-            <Sidebar collapsible="icon">
-              <AppSidebar />
-            </Sidebar>
-            <SidebarInset>
-              <AppHeader />
-              {children}
-            </SidebarInset>
-          </SidebarProvider>
+          <div className="flex flex-col h-full">
+            <AppHeader />
+            <main className="flex-1 overflow-y-auto">{children}</main>
+          </div>
           <Toaster />
         </ThemeProvider>
       </body>
