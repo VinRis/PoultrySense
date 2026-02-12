@@ -11,6 +11,10 @@ import {
   ListOrdered,
   Loader2,
   Download,
+  Syringe,
+  ClipboardList,
+  Pill,
+  Activity,
 } from "lucide-react";
 
 import type { Diagnosis } from "@/lib/types";
@@ -24,6 +28,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getRecommendationsAction } from "../actions";
+import type { GenerateTreatmentRecommendationsOutput } from "@/ai/flows/generate-treatment-recommendations";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -74,15 +79,21 @@ interface DiagnosisResultProps {
 
 export function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
   const [isRecsLoading, setIsRecsLoading] = React.useState(false);
-  const [recommendations, setRecommendations] = React.useState<string[]>([]);
+  const [detailedPlan, setDetailedPlan] =
+    React.useState<GenerateTreatmentRecommendationsOutput | null>(null);
   const { toast } = useToast();
 
   const handleGetRecommendations = async () => {
     setIsRecsLoading(true);
-    setRecommendations([]);
+    setDetailedPlan(null);
     try {
-      const result = await getRecommendationsAction({ diagnosis: diagnosis.diagnosis });
-      setRecommendations(result.recommendations);
+      const result = await getRecommendationsAction({
+        diagnosis: diagnosis.diagnosis,
+        possibleDiseases: diagnosis.possibleDiseases,
+        identifiedIssues: diagnosis.identifiedIssues,
+        symptomDescription: diagnosis.symptomDescription,
+      });
+      setDetailedPlan(result);
     } catch (error) {
       console.error("Failed to get recommendations:", error);
       toast({
@@ -148,11 +159,15 @@ export function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
         </InfoCard>
 
         <InfoCard icon={Sparkles} title="Confidence Level">
-          <Badge variant={getConfidenceVariant(diagnosis.confidenceLevel)} className="text-lg">
+          <Badge
+            variant={getConfidenceVariant(diagnosis.confidenceLevel)}
+            className="text-lg"
+          >
             {diagnosis.confidenceLevel}
           </Badge>
           <p className="text-sm text-muted-foreground mt-2">
-            This is an AI-generated assessment. Always consult with a qualified veterinarian for a definitive diagnosis.
+            This is an AI-generated assessment. Always consult with a qualified
+            veterinarian for a definitive diagnosis.
           </p>
         </InfoCard>
       </div>
@@ -172,14 +187,90 @@ export function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
           ))}
         </ul>
       </InfoCard>
-      
-      <InfoCard icon={ListOrdered} title="Recommended Next Steps">
-        {recommendations.length > 0 ? (
-           <ul className="list-decimal list-inside space-y-2 text-muted-foreground">
-           {recommendations.map((step, i) => (
-             <li key={i}>{step}</li>
-           ))}
-         </ul>
+
+      <InfoCard
+        icon={ListOrdered}
+        title={
+          detailedPlan ? "Detailed Treatment Plan" : "Recommended Next Steps"
+        }
+      >
+        {detailedPlan ? (
+          <div className="space-y-6">
+            {detailedPlan.medicationSuggestions &&
+              detailedPlan.medicationSuggestions.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
+                    <Syringe className="h-5 w-5" />
+                    Medication Suggestions
+                  </h3>
+                  <div className="space-y-3">
+                    {detailedPlan.medicationSuggestions.map((med, i) => (
+                      <div
+                        key={i}
+                        className="p-3 bg-muted/50 rounded-lg border"
+                      >
+                        <h4 className="font-semibold">{med.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          <strong className="text-foreground">Dosage:</strong>{" "}
+                          {med.dosage}
+                        </p>
+                        {med.notes && (
+                          <p className="text-sm text-muted-foreground mt-1">
+                            <strong className="text-foreground">Notes:</strong>{" "}
+                            {med.notes}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {detailedPlan.managementAdvice &&
+              detailedPlan.managementAdvice.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
+                    <ClipboardList className="h-5 w-5" />
+                    Management Advice
+                  </h3>
+                  <ul className="list-disc list-inside space-y-2 text-muted-foreground pl-2">
+                    {detailedPlan.managementAdvice.map((advice, i) => (
+                      <li key={i}>{advice}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+            {detailedPlan.nutritionalSupport &&
+              detailedPlan.nutritionalSupport.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
+                    <Pill className="h-5 w-5" />
+                    Nutritional Support
+                  </h3>
+                  <ul className="list-disc list-inside space-y-2 text-muted-foreground pl-2">
+                    {detailedPlan.nutritionalSupport.map((support, i) => (
+                      <li key={i}>{support}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+            {detailedPlan.followUpActions &&
+              detailedPlan.followUpActions.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
+                    <Activity className="h-5 w-5" />
+                    Follow-up Actions
+                  </h3>
+                  <ul className="list-disc list-inside space-y-2 text-muted-foreground pl-2">
+                    {detailedPlan.followUpActions.map((action, i) => (
+                      <li key={i}>{action}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+          </div>
         ) : (
           <>
             <ul className="list-decimal list-inside space-y-2 text-muted-foreground">
@@ -188,11 +279,14 @@ export function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
               ))}
             </ul>
             <div className="mt-4">
-              <Button onClick={handleGetRecommendations} disabled={isRecsLoading}>
+              <Button
+                onClick={handleGetRecommendations}
+                disabled={isRecsLoading}
+              >
                 {isRecsLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    Generating Detailed Plan...
                   </>
                 ) : (
                   <>

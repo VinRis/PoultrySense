@@ -18,6 +18,9 @@ export async function diagnosePoultryAction(
 
 const GetRecommendationsInput = z.object({
   diagnosis: z.string(),
+  possibleDiseases: z.array(z.string()),
+  identifiedIssues: z.array(z.string()),
+  symptomDescription: z.string().optional(),
 });
 
 export async function getRecommendationsAction(
