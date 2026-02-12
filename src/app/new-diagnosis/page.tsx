@@ -378,10 +378,11 @@ export default function NewDiagnosisPage() {
 
       // Save to firestore
       const diagnosesCol = collection(firestore, `users/${user.uid}/diagnoses`);
-      addDocumentNonBlocking(diagnosesCol, {
-        userId: user.uid,
-        ...displayData,
-      });
+      // Using JSON.parse(JSON.stringify(...)) is a trick to remove any 'undefined' fields before sending to Firestore
+      addDocumentNonBlocking(
+        diagnosesCol,
+        JSON.parse(JSON.stringify({ userId: user.uid, ...displayData }))
+      );
 
       // Set local state for immediate display
       const newDiagnosisForDisplay: Diagnosis = {
