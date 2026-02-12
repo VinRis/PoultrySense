@@ -22,21 +22,21 @@ export function BottomNavBar() {
   }
 
   return (
-    <nav className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border bg-background/80 p-2 shadow-lg backdrop-blur-sm md:hidden">
-      <div className="flex items-center gap-2">
+    <nav className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border bg-background/80 p-1 shadow-lg backdrop-blur-sm md:hidden">
+      <div className="flex items-center gap-1">
         {navItems.map((item) => (
           <Button
             key={item.href}
             asChild
             variant="ghost"
             className={cn(
-              'flex h-14 w-20 flex-col items-center justify-center gap-1 rounded-2xl p-1 text-muted-foreground',
+              'flex h-12 w-16 flex-col items-center justify-center gap-0.5 rounded-xl p-1 text-muted-foreground',
               pathname === item.href &&
                 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary'
             )}
           >
             <Link href={item.href}>
-              <item.icon className="h-5 w-5" />
+              <item.icon className="h-4 w-4" />
               <span className="text-center text-[10px] leading-tight">
                 {item.label}
               </span>
