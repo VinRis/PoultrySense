@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { AppHeader } from "./components/AppHeader";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
+import { BottomNavBar } from "./components/BottomNavBar";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -34,9 +35,10 @@ export default function RootLayout({
           <FirebaseClientProvider>
             <div className="flex flex-col h-full">
               <AppHeader />
-              <main className="flex-1 overflow-y-auto">{children}</main>
+              <main className="flex-1 overflow-y-auto pb-20 md:pb-0">{children}</main>
             </div>
             <Toaster />
+            <BottomNavBar />
           </FirebaseClientProvider>
         </ThemeProvider>
       </body>

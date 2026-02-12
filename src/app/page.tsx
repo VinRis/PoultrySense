@@ -159,12 +159,6 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
-      <Link href="/new-diagnosis" className="fixed bottom-6 right-6 z-20">
-        <Button size="icon" className="rounded-full h-16 w-16 shadow-lg">
-          <Plus className="h-8 w-8" />
-          <span className="sr-only">New Diagnosis</span>
-        </Button>
-      </Link>
     </div>
   );
 }

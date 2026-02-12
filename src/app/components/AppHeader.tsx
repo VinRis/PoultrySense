@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PlusSquare, LayoutDashboard } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,8 +12,8 @@ export function AppHeader() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/new-diagnosis", label: "New Diagnosis", icon: PlusSquare },
+    { href: "/", label: "Dashboard" },
+    { href: "/new-diagnosis", label: "New Diagnosis" },
   ];
 
   // Do not show nav items on auth pages
@@ -46,27 +45,6 @@ export function AppHeader() {
       </div>
 
       <div className="flex items-center gap-2">
-        {showNav && (
-          <nav className="flex md:hidden items-center">
-            {navItems.map((item) => (
-              <Button
-                key={item.href}
-                asChild
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "text-muted-foreground",
-                  pathname === item.href && "text-primary"
-                )}
-              >
-                <Link href={item.href}>
-                  <item.icon className="h-5 w-5" />
-                  <span className="sr-only">{item.label}</span>
-                </Link>
-              </Button>
-            ))}
-          </nav>
-        )}
         <UserNav />
       </div>
     </header>
