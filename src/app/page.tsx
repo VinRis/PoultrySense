@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   X,
 } from "lucide-react";
+import { isToday } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -82,7 +83,7 @@ export default function Home() {
   const [result, setResult] = React.useState<Diagnosis | null>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
   const { toast } = useToast();
-  const [, setHistory] = useLocalStorage<Diagnosis[]>("diagnosisHistory", []);
+  const [history, setHistory] = useLocalStorage<Diagnosis[]>("diagnosisHistory", []);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<DiagnosisFormValues>({
@@ -124,6 +125,17 @@ export default function Home() {
   };
 
   const onSubmit = async (data: DiagnosisFormValues) => {
+    const diagnosesToday = history.filter((d) => isToday(new Date(d.timestamp))).length;
+
+    if (diagnosesToday >= 10) {
+      toast({
+        variant: "destructive",
+        title: "Daily Limit Reached",
+        description: "You have reached the limit of 10 diagnoses for today. Please try again tomorrow.",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     setResult(null);
 
