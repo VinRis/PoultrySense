@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, LabelList, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { format, parseISO, startOfDay, subDays } from "date-fns";
 import type { Diagnosis } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,46 +104,45 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
           <CardDescription>Number of diagnoses over the last 7 days.</CardDescription>
         </CardHeader>
         <CardContent className="p-2 pt-0 sm:p-4 sm:pt-0">
-          <div className="overflow-x-auto">
-            <ChartContainer
-              config={chartConfig}
-              className="h-48 w-full sm:h-64 min-w-[320px]"
+          <ChartContainer
+            config={chartConfig}
+            className="h-48 w-full sm:h-64"
+          >
+            <LineChart
+              accessibilityLayer
+              data={recentActivity}
+              margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
             >
-              <LineChart
-                accessibilityLayer
-                data={recentActivity}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-              >
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="name"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  fontSize={12}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={8}
-                  allowDecimals={false}
-                  fontSize={12}
-                />
-                <ChartTooltip
-                  cursor={true}
-                  content={<ChartTooltipContent indicator="line" />}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="diagnoses"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </div>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={(value) => value.slice(0, 3)}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                allowDecimals={false}
+                tick={{ fontSize: 12 }}
+              />
+              <ChartTooltip
+                cursor={true}
+                content={<ChartTooltipContent indicator="line" />}
+              />
+              <Line
+                type="monotone"
+                dataKey="diagnoses"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ChartContainer>
         </CardContent>
       </Card>
 
@@ -154,44 +153,44 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardHeader>
         <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-grow">
           {diseaseFrequency.length > 0 ? (
-            <div className="overflow-x-auto">
-              <ChartContainer
-                config={chartConfig}
-                className="h-48 w-full sm:h-64 min-w-[320px]"
+            <ChartContainer
+              config={chartConfig}
+              className="h-48 w-full sm:h-64"
+            >
+              <BarChart
+                accessibilityLayer
+                data={diseaseFrequency}
+                layout="vertical"
+                margin={{ left: 0, right: 30, top: 10, bottom: 0 }}
               >
-                <BarChart
-                  accessibilityLayer
-                  data={diseaseFrequency}
-                  layout="vertical"
-                  margin={{ left: 5, right: 10, top: 10, bottom: 0 }}
+                <YAxis
+                  dataKey="name"
+                  type="category"
+                  tickLine={false}
+                  tickMargin={5}
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
+                  tickFormatter={(value) =>
+                    value.length > 8 ? `${value.substring(0, 8)}...` : value
+                  }
+                  width={60}
+                  interval={0}
+                />
+                <XAxis dataKey="count" type="number" hide />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="hsl(var(--primary))"
+                  radius={4}
+                  background={{ fill: "hsl(var(--muted))", radius: 4 }}
                 >
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    tickLine={false}
-                    tickMargin={5}
-                    axisLine={false}
-                    className="text-xs"
-                    tickFormatter={(value) =>
-                      value.length > 12 ? `${value.substring(0, 12)}...` : value
-                    }
-                    width={100}
-                    interval={0}
-                  />
-                  <XAxis dataKey="count" type="number" hide />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent hideLabel />}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="hsl(var(--primary))"
-                    radius={4}
-                    background={{ fill: "hsl(var(--muted))", radius: 4 }}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </div>
+                   <LabelList dataKey="count" position="right" offset={8} className="fill-foreground" style={{ fontSize: '12px' }} />
+                </Bar>
+              </BarChart>
+            </ChartContainer>
           ) : (
             <div className="flex h-48 sm:h-64 items-center justify-center text-muted-foreground">
               Not enough data to display.
@@ -228,7 +227,7 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardContent>
       </Card>
 
-      <Card className="flex flex-col">
+      <Card className="flex flex-col justify-between">
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
           <CardTitle className="text-lg md:text-xl">Key Metrics</CardTitle>
           <CardDescription>At-a-glance summary.</CardDescription>
