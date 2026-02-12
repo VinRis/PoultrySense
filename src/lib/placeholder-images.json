@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "poultry-hero",
+      "description": "A healthy chicken in a green field",
+      "imageUrl": "https://images.unsplash.com/photo-1767415743162-b4cf317e6eaf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxjaGlja2VuJTIwZmllbGR8ZW58MHx8fHwxNzcwODk1Mzc5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chicken field"
+    }
+  ]
 }
