@@ -27,7 +27,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { DashboardCharts } from "../components/DashboardCharts";
 
 export default function HistoryPage() {
@@ -130,59 +129,46 @@ export default function HistoryPage() {
         <DashboardCharts diagnoses={history} />
 
         <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Diagnosis Log</CardTitle>
-              <CardDescription>A detailed history of all your diagnoses.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {history.length === 0 ? (
-                 <div className="text-center py-16 border-2 border-dashed rounded-lg flex flex-col items-center justify-center">
-                  <LayoutDashboard className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No History Found</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Your past diagnoses will appear here once you run one.
-                  </p>
-                  <Button asChild className="mt-6">
-                    <Link href="/">Start a New Diagnosis</Link>
-                  </Button>
-                </div>
-              ) : (
-                <Accordion type="single" collapsible className="w-full">
-                  {history.map((diagnosis) => (
-                    <AccordionItem value={diagnosis.id} key={diagnosis.id}>
-                      <AccordionTrigger className="p-4 hover:no-underline text-sm">
-                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full text-left items-center">
-                          <div className="sm:col-span-2">
-                            <h4 className="font-semibold truncate text-foreground">
-                              {diagnosis.possibleDiseases[0] || "General Assessment"}
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              {format(new Date(diagnosis.timestamp), "MMM d, yyyy 'at' p")}
-                            </p>
-                          </div>
-                          <div className="flex justify-end sm:justify-center">
-                            <Badge variant={getConfidenceVariant(diagnosis.confidenceLevel)}>
-                              {diagnosis.confidenceLevel}
-                            </Badge>
-                          </div>
-                          <div className="hidden sm:flex items-center justify-end gap-2 text-muted-foreground">
-                            {getInputTypeIcon(diagnosis)}
-                            <span>{diagnosis.photoDataUri ? 'Image' : diagnosis.audioDataUri ? 'Audio' : 'Text'}</span>
-                          </div>
+          <h2 className="text-2xl font-semibold tracking-tight mb-4">Diagnosis Log</h2>
+          {history.length === 0 ? (
+             <div className="text-center py-16 border-2 border-dashed rounded-lg flex flex-col items-center justify-center">
+              <LayoutDashboard className="mx-auto h-12 w-12 text-muted-foreground" />
+              <h3 className="mt-4 text-lg font-medium">No History Found</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your past diagnoses will appear here once you run one.
+              </p>
+              <Button asChild className="mt-6">
+                <Link href="/">Start a New Diagnosis</Link>
+              </Button>
+            </div>
+          ) : (
+            <Accordion type="single" collapsible className="w-full">
+              {history.map((diagnosis) => (
+                <AccordionItem value={diagnosis.id} key={diagnosis.id}>
+                  <AccordionTrigger>
+                    <div className="flex items-center justify-between w-full pr-4">
+                        <div className="text-left">
+                            <h4 className="font-semibold">{diagnosis.possibleDiseases[0] || "General Assessment"}</h4>
+                            <p className="text-sm text-muted-foreground">{format(new Date(diagnosis.timestamp), "PPP p")}</p>
                         </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="p-4 pt-0">
-                         <div className="p-4 border rounded-lg bg-muted/20">
-                           <DiagnosisResult diagnosis={diagnosis} />
-                         </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              )}
-            </CardContent>
-          </Card>
+                        <div className="flex items-center gap-4">
+                            <Badge variant={getConfidenceVariant(diagnosis.confidenceLevel)}>
+                                {diagnosis.confidenceLevel}
+                            </Badge>
+                            <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
+                                {getInputTypeIcon(diagnosis)}
+                                <span>{diagnosis.photoDataUri ? 'Image' : diagnosis.audioDataUri ? 'Audio' : 'Text'}</span>
+                            </div>
+                        </div>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <DiagnosisResult diagnosis={diagnosis} />
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          )}
         </div>
       </div>
     </div>
