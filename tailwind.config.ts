@@ -19,7 +19,7 @@ export default {
     },
     extend: {
       boxShadow: {
-        'beautiful': '0 6px 20px -6px hsl(var(--primary) / 0.3), 0 4px 12px -4px hsl(var(--accent) / 0.2)',
+        'beautiful': '0 6px 20px -6px hsl(var(--primary) / 0.3), 5px 4px 12px -4px hsla(180, 100%, 70%, 0.2), -5px 4px 12px -4px hsla(300, 100%, 70%, 0.2)',
       },
       fontFamily: {
         body: ["var(--font-inter)", ...fontFamily.sans],
