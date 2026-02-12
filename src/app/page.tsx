@@ -1,76 +1,68 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import Link from "next/link";
-import { format } from "date-fns";
+import * as React from 'react';
+import Link from 'next/link';
+import { format } from 'date-fns';
 import {
   LayoutDashboard,
-  Trash2,
   FileText,
   Image as ImageIcon,
   Mic,
   Plus,
-} from "lucide-react";
+} from 'lucide-react';
+import { collection, query, orderBy } from 'firebase/firestore';
 
-import { useLocalStorage } from "@/lib/hooks/use-local-storage";
-import type { Diagnosis } from "@/lib/types";
+import {
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+} from '@/firebase';
+import { useRequireAuth } from '@/hooks/use-require-auth';
+import type { Diagnosis } from '@/lib/types';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { DiagnosisResult } from "@/app/components/DiagnosisResult";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
-import { DashboardCharts } from "@/app/components/DashboardCharts";
+} from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { DiagnosisResult } from '@/app/components/DiagnosisResult';
+import { Badge } from '@/components/ui/badge';
+import { DashboardCharts } from '@/app/components/DashboardCharts';
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { useRequireAuth } from "@/hooks/use-require-auth";
-import { FullScreenLoader } from "./components/FullScreenLoader";
+} from '@/components/ui/card';
+import { FullScreenLoader } from './components/FullScreenLoader';
 
 export default function DashboardPage() {
   const { user, isUserLoading: isAuthLoading } = useRequireAuth();
-  const [history, setHistory] = useLocalStorage<Diagnosis[]>(
-    "diagnosisHistory",
-    []
-  );
-  const [isClient, setIsClient] = React.useState(false);
+  const firestore = useFirestore();
 
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const diagnosesQuery = useMemoFirebase(() => {
+    if (!user) return null;
+    return query(
+      collection(firestore, `users/${user.uid}/diagnoses`),
+      orderBy('timestamp', 'desc')
+    );
+  }, [user, firestore]);
 
-  const handleClearHistory = () => {
-    setHistory([]);
-  };
+  const { data: history, isLoading: isHistoryLoading } =
+    useCollection<Diagnosis>(diagnosesQuery);
 
-  const getConfidenceVariant = (level: "High" | "Medium" | "Low") => {
+  const getConfidenceVariant = (level: 'High' | 'Medium' | 'Low') => {
     switch (level) {
-      case "High":
-        return "default";
-      case "Medium":
-        return "secondary";
-      case "Low":
-        return "destructive";
+      case 'High':
+        return 'default';
+      case 'Medium':
+        return 'secondary';
+      case 'Low':
+        return 'destructive';
       default:
-        return "secondary";
+        return 'secondary';
     }
   };
 
@@ -80,11 +72,7 @@ export default function DashboardPage() {
     return <FileText className="h-4 w-4" />;
   };
 
-  if (isAuthLoading || !user) {
-    return <FullScreenLoader />;
-  }
-
-  if (!isClient) {
+  if (isAuthLoading || !user || (diagnosesQuery && isHistoryLoading)) {
     return <FullScreenLoader />;
   }
 
@@ -98,39 +86,14 @@ export default function DashboardPage() {
               Analytics Dashboard
             </h1>
             <p className="mt-2 text-lg text-muted-foreground">
-              Review trends and past diagnostic reports.
+              Review trends and past diagnostic reports for your account.
             </p>
           </div>
-          {history.length > 0 && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="mt-4 sm:mt-0">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Clear History
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    all your diagnosis history.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearHistory}>
-                    Continue
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
         </header>
 
-        <DashboardCharts diagnoses={history} />
+        <DashboardCharts diagnoses={history || []} />
 
-        {history.length > 0 ? (
+        {history && history.length > 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>Diagnosis Log</CardTitle>
@@ -147,13 +110,10 @@ export default function DashboardPage() {
                         <div className="text-left">
                           <h4 className="font-semibold">
                             {diagnosis.possibleDiseases[0] ||
-                              "General Assessment"}
+                              'General Assessment'}
                           </h4>
                           <p className="text-sm text-muted-foreground">
-                            {format(
-                              new Date(diagnosis.timestamp),
-                              "PPP p"
-                            )}
+                            {format(new Date(diagnosis.timestamp), 'PPP p')}
                           </p>
                         </div>
                         <div className="flex items-center gap-4">
@@ -168,10 +128,10 @@ export default function DashboardPage() {
                             {getInputTypeIcon(diagnosis)}
                             <span>
                               {diagnosis.photoDataUri
-                                ? "Image"
+                                ? 'Image'
                                 : diagnosis.audioDataUri
-                                ? "Audio"
-                                : "Text"}
+                                ? 'Audio'
+                                : 'Text'}
                             </span>
                           </div>
                         </div>
