@@ -33,8 +33,8 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --gradient-start: 170 60% 90%;
-    --gradient-end: 200 60% 92%;
+    --gradient-start: 180 50% 95%;
+    --gradient-end: 270 70% 95%;
   }
 
   .dark {
@@ -62,8 +62,8 @@ body {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
-    --gradient-start: 170 20% 10%;
-    --gradient-end: 200 20% 12%;
+    --gradient-start: 180 15% 10%;
+    --gradient-end: 270 20% 12%;
   }
 }
 
