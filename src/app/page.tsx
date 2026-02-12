@@ -3,11 +3,23 @@
 import * as React from "react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { LayoutDashboard, Trash2, FileText, Image as ImageIcon, Mic, Plus } from "lucide-react";
+import {
+  LayoutDashboard,
+  Trash2,
+  FileText,
+  Image as ImageIcon,
+  Mic,
+  Plus,
+} from "lucide-react";
 
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
 import type { Diagnosis } from "@/lib/types";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { DiagnosisResult } from "@/app/components/DiagnosisResult";
 import {
@@ -23,9 +35,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { DashboardCharts } from "@/app/components/DashboardCharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { FullScreenLoader } from "./components/FullScreenLoader";
 
 export default function DashboardPage() {
+  const { user, isUserLoading: isAuthLoading } = useRequireAuth();
   const [history, setHistory] = useLocalStorage<Diagnosis[]>(
     "diagnosisHistory",
     []
@@ -59,23 +80,12 @@ export default function DashboardPage() {
     return <FileText className="h-4 w-4" />;
   };
 
+  if (isAuthLoading || !user) {
+    return <FullScreenLoader />;
+  }
+
   if (!isClient) {
-    return (
-      <div className="p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto animate-pulse">
-          <div className="h-10 bg-muted rounded-md w-1/4 mb-4"></div>
-          <div className="h-6 bg-muted rounded-md w-1/3 mb-8"></div>
-          <div className="mb-8 grid gap-6 md:grid-cols-2">
-            <div className="md:col-span-2 h-80 bg-muted rounded-lg"></div>
-            <div className="h-64 bg-muted rounded-lg"></div>
-            <div className="h-64 bg-muted rounded-lg"></div>
-            <div className="h-64 bg-muted rounded-lg"></div>
-            <div className="h-64 bg-muted rounded-lg"></div>
-          </div>
-          <div className="h-40 bg-muted rounded-lg"></div>
-        </div>
-      </div>
-    );
+    return <FullScreenLoader />;
   }
 
   return (
@@ -103,7 +113,8 @@ export default function DashboardPage() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete all your diagnosis history.
+                    This action cannot be undone. This will permanently delete
+                    all your diagnosis history.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -123,7 +134,9 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Diagnosis Log</CardTitle>
-              <CardDescription>Review individual diagnosis reports from your history.</CardDescription>
+              <CardDescription>
+                Review individual diagnosis reports from your history.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
@@ -132,16 +145,34 @@ export default function DashboardPage() {
                     <AccordionTrigger>
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="text-left">
-                          <h4 className="font-semibold">{diagnosis.possibleDiseases[0] || "General Assessment"}</h4>
-                          <p className="text-sm text-muted-foreground">{format(new Date(diagnosis.timestamp), "PPP p")}</p>
+                          <h4 className="font-semibold">
+                            {diagnosis.possibleDiseases[0] ||
+                              "General Assessment"}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {format(
+                              new Date(diagnosis.timestamp),
+                              "PPP p"
+                            )}
+                          </p>
                         </div>
                         <div className="flex items-center gap-4">
-                          <Badge variant={getConfidenceVariant(diagnosis.confidenceLevel)}>
+                          <Badge
+                            variant={getConfidenceVariant(
+                              diagnosis.confidenceLevel
+                            )}
+                          >
                             {diagnosis.confidenceLevel}
                           </Badge>
                           <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
                             {getInputTypeIcon(diagnosis)}
-                            <span>{diagnosis.photoDataUri ? 'Image' : diagnosis.audioDataUri ? 'Audio' : 'Text'}</span>
+                            <span>
+                              {diagnosis.photoDataUri
+                                ? "Image"
+                                : diagnosis.audioDataUri
+                                ? "Audio"
+                                : "Text"}
+                            </span>
                           </div>
                         </div>
                       </div>

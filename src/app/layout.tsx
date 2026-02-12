@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/app/components/ThemeProvider";
 import { AppHeader } from "./components/AppHeader";
 import { PwaInstall } from "./components/PwaInstall";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -32,12 +33,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex flex-col h-full">
-            <AppHeader />
-            <main className="flex-1 overflow-y-auto">{children}</main>
-          </div>
-          <Toaster />
-          <PwaInstall />
+          <FirebaseClientProvider>
+            <div className="flex flex-col h-full">
+              <AppHeader />
+              <main className="flex-1 overflow-y-auto">{children}</main>
+            </div>
+            <Toaster />
+            <PwaInstall />
+          </FirebaseClientProvider>
         </ThemeProvider>
       </body>
     </html>

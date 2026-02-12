@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -30,12 +29,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage } from "@/lib/hooks/use-local-storage";
-import { diagnosePoultryAction, diagnosePoultryByAudioAction } from "@/app/actions";
+import {
+  diagnosePoultryAction,
+  diagnosePoultryByAudioAction,
+} from "@/app/actions";
 import type { Diagnosis } from "@/lib/types";
 import { DiagnosisResult } from "@/app/components/DiagnosisResult";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useRequireAuth } from "@/hooks/use-require-auth";
+import { FullScreenLoader } from "../components/FullScreenLoader";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_AUDIO_SIZE = 10 * 1024 * 1024; // 10MB
@@ -45,7 +49,13 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/png",
   "image/webp",
 ];
-const ACCEPTED_AUDIO_TYPES = ["audio/webm", "audio/mp4", "audio/ogg", "audio/wav", "audio/mpeg"];
+const ACCEPTED_AUDIO_TYPES = [
+  "audio/webm",
+  "audio/mp4",
+  "audio/ogg",
+  "audio/wav",
+  "audio/mpeg",
+];
 
 const diagnosisSchema = z
   .object({
@@ -123,6 +133,7 @@ const diagnosisSchema = z
 type DiagnosisFormValues = z.infer<typeof diagnosisSchema>;
 
 export default function NewDiagnosisPage() {
+  const { user, isUserLoading: isAuthLoading } = useRequireAuth();
   const [isLoading, setIsLoading] = React.useState(false);
   const [result, setResult] = React.useState<Diagnosis | null>(null);
   const [preview, setPreview] = React.useState<string | null>(null);
@@ -387,6 +398,10 @@ export default function NewDiagnosisPage() {
       setIsLoading(false);
     }
   };
+
+  if (isAuthLoading || !user) {
+    return <FullScreenLoader />;
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
