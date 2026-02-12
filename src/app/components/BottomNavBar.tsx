@@ -22,7 +22,7 @@ export function BottomNavBar() {
   }
 
   return (
-    <nav className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border bg-background/80 p-1 shadow-lg backdrop-blur-sm md:hidden">
+    <nav className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-full border bg-background/80 p-1 shadow-lg backdrop-blur-lg md:hidden">
       <div className="flex items-center gap-1">
         {navItems.map((item) => (
           <Button
@@ -30,14 +30,14 @@ export function BottomNavBar() {
             asChild
             variant="ghost"
             className={cn(
-              'flex h-12 w-16 flex-col items-center justify-center gap-0.5 rounded-xl p-1 text-muted-foreground',
+              'flex h-auto w-auto flex-col items-center justify-center gap-1 rounded-full px-4 py-2 text-muted-foreground transition-colors hover:bg-transparent hover:text-primary',
               pathname === item.href &&
-                'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary'
+                'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
             )}
           >
             <Link href={item.href}>
-              <item.icon className="h-4 w-4" />
-              <span className="text-center text-[10px] leading-tight">
+              <item.icon className="h-5 w-5" />
+              <span className="text-center text-xs font-medium leading-none">
                 {item.label}
               </span>
             </Link>
