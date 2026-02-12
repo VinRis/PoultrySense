@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import {
   LayoutDashboard,
   FileText,
-  Image as ImageIcon,
+  ImageIcon,
   Mic,
   Plus,
 } from 'lucide-react';
@@ -81,11 +81,11 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl flex items-center gap-3">
-              <LayoutDashboard className="h-10 w-10 hidden sm:block" />
+            <h1 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl flex items-center gap-3">
+              <LayoutDashboard className="h-8 w-8 hidden sm:block" />
               Analytics Dashboard
             </h1>
-            <p className="mt-2 text-lg text-muted-foreground">
+            <p className="mt-2 text-base sm:text-lg text-muted-foreground">
               Review trends and past diagnostic reports for your account.
             </p>
           </div>
@@ -108,25 +108,26 @@ export default function DashboardPage() {
                     <AccordionTrigger>
                       <div className="flex items-center justify-between w-full pr-4">
                         <div className="text-left">
-                          <h4 className="font-semibold">
+                          <h4 className="font-semibold text-sm sm:text-base">
                             {diagnosis.possibleDiseases[0] ||
                               'General Assessment'}
                           </h4>
-                          <p className="text-sm text-muted-foreground">
-                            {format(new Date(diagnosis.timestamp), 'PPP p')}
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            {format(new Date(diagnosis.timestamp), 'PP p')}
                           </p>
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                           <Badge
                             variant={getConfidenceVariant(
                               diagnosis.confidenceLevel
                             )}
+                            className="text-xs"
                           >
                             {diagnosis.confidenceLevel}
                           </Badge>
                           <div className="hidden sm:flex items-center gap-2 text-muted-foreground">
                             {getInputTypeIcon(diagnosis)}
-                            <span>
+                            <span className="text-sm">
                               {diagnosis.photoDataUri
                                 ? 'Image'
                                 : diagnosis.audioDataUri
