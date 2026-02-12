@@ -23,6 +23,7 @@ import type { Diagnosis } from "@/lib/types";
 import { DiagnosisResult } from "@/app/components/DiagnosisResult";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = [
@@ -200,15 +201,25 @@ export default function Home() {
                             }
                           }}
                           value={field.value}
-                          className="flex space-x-4 pt-2"
+                          className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
                         >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="image" id="method-image" />
-                            <Label htmlFor="method-image" className="font-normal cursor-pointer">Upload Image</Label>
+                          <div>
+                            <RadioGroupItem value="image" id="method-image" className="peer sr-only" />
+                            <Label
+                              htmlFor="method-image"
+                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-background peer-data-[state=checked]:text-foreground peer-data-[state=checked]:shadow-sm"
+                            >
+                              Upload Image
+                            </Label>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="description" id="method-description" />
-                            <Label htmlFor="method-description" className="font-normal cursor-pointer">Describe Symptoms</Label>
+                          <div>
+                            <RadioGroupItem value="description" id="method-description" className="peer sr-only" />
+                            <Label
+                              htmlFor="method-description"
+                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-background peer-data-[state=checked]:text-foreground peer-data-[state=checked]:shadow-sm"
+                            >
+                              Describe Symptoms
+                            </Label>
                           </div>
                         </RadioGroup>
                       </div>
