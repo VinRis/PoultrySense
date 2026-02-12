@@ -14,6 +14,7 @@ export function AppHeader() {
   const navItems = [
     { href: "/", label: "Dashboard" },
     { href: "/new-diagnosis", label: "Diagnosis" },
+    { href: "/profile", label: "Profile" },
   ];
 
   // Do not show nav items on auth pages
