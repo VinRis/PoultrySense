@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack(config) {
+    config.resolve.alias['next/og$'] = require.resolve(
+      'next/dist/server/og/image-response.js'
+    );
+    return config;
+  },
 };
 
 export default nextConfig;
