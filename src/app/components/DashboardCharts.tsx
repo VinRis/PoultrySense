@@ -147,12 +147,12 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
           <CardTitle className="text-lg md:text-xl">Top 5 Diseases</CardTitle>
           <CardDescription>Most frequently diagnosed issues.</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
+        <CardContent className="p-4 pt-0 md:p-6 md:pt-0 flex-grow">
           {diseaseFrequency.length > 0 ? (
             <div className="overflow-x-auto">
               <ChartContainer
@@ -200,14 +200,14 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
           <CardTitle className="text-lg md:text-xl">
             Confidence Breakdown
           </CardTitle>
           <CardDescription>Distribution of AI confidence levels.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-2 p-4 pt-2 md:gap-4 md:p-6 md:pt-4">
+        <CardContent className="flex flex-col justify-center flex-grow gap-2 p-4 pt-2 md:gap-4 md:p-6 md:pt-4">
           {confidenceDistribution.map((item) => (
             <div key={item.name} className="flex items-center gap-2 md:gap-4">
               <span className="font-semibold w-14 text-sm">{item.name}</span>
@@ -228,12 +228,12 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
           <CardTitle className="text-lg md:text-xl">Key Metrics</CardTitle>
           <CardDescription>At-a-glance summary.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 p-4 pt-2 md:gap-6 md:p-6 md:pt-4">
+        <CardContent className="flex flex-col flex-grow justify-around gap-4 p-4 pt-2 md:gap-6 md:p-6 md:pt-4">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="p-2 md:p-3 bg-primary/10 rounded-lg text-primary">
               <FileText className="h-5 w-5 md:h-6 md:w-6" />
@@ -261,21 +261,23 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-2">
           <CardTitle className="text-lg md:text-xl">
             AI Assessment Disclaimer
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-start gap-3 p-4 pt-2 md:gap-4 md:p-6 md:pt-0">
-          <div className="p-2 bg-destructive/10 rounded-lg text-destructive mt-1">
-            <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
+        <CardContent className="flex flex-grow items-center p-4 pt-2 md:p-6 md:pt-0">
+          <div className="flex items-start gap-3 md:gap-4">
+            <div className="p-2 bg-destructive/10 rounded-lg text-destructive mt-1">
+              <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              The analyses provided are AI-generated and for informational
+              purposes only. Always consult with a qualified veterinarian for a
+              definitive diagnosis.
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            The analyses provided are AI-generated and for informational
-            purposes only. Always consult with a qualified veterinarian for a
-            definitive diagnosis.
-          </p>
         </CardContent>
       </Card>
     </div>
