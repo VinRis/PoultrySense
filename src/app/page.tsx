@@ -242,7 +242,7 @@ export default function Home() {
                             <RadioGroupItem value="image" id="method-image" className="peer sr-only" />
                             <Label
                               htmlFor="method-image"
-                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-background peer-data-[state=checked]:text-foreground peer-data-[state=checked]:shadow-sm"
+                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
                             >
                               Upload Image
                             </Label>
@@ -251,7 +251,7 @@ export default function Home() {
                             <RadioGroupItem value="description" id="method-description" className="peer sr-only" />
                             <Label
                               htmlFor="method-description"
-                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-background peer-data-[state=checked]:text-foreground peer-data-[state=checked]:shadow-sm"
+                              className="flex items-center justify-center rounded-md p-2 text-sm font-medium cursor-pointer transition-colors text-muted-foreground hover:bg-background/50 peer-data-[state=checked]:bg-primary peer-data-[state=checked]:text-primary-foreground peer-data-[state=checked]:shadow-sm"
                             >
                               Describe Symptoms
                             </Label>
