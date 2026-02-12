@@ -23,7 +23,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.variable} font-body antialiased h-full`}>
+      <body
+        className={`${inter.variable} font-body antialiased h-full`}
+        suppressHydrationWarning
+      >
         <SidebarProvider>
           <Sidebar>
             <AppSidebar />
