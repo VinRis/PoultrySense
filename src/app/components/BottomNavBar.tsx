@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, PlusSquare } from 'lucide-react';
+import { LayoutDashboard, PlusSquare, User } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ export function BottomNavBar() {
   const navItems = [
     { href: '/', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/new-diagnosis', label: 'New Diagnosis', icon: PlusSquare },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   // Do not show nav items on auth pages
@@ -28,16 +29,17 @@ export function BottomNavBar() {
             key={item.href}
             asChild
             variant="ghost"
-            size="icon"
             className={cn(
-              'flex h-12 w-12 flex-col gap-1 rounded-full text-muted-foreground',
+              'flex h-14 w-20 flex-col items-center justify-center gap-1 rounded-2xl p-1 text-muted-foreground',
               pathname === item.href &&
                 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary'
             )}
           >
             <Link href={item.href}>
               <item.icon className="h-5 w-5" />
-              <span className="text-[10px]">{item.label}</span>
+              <span className="text-center text-[10px] leading-tight">
+                {item.label}
+              </span>
             </Link>
           </Button>
         ))}
