@@ -13,13 +13,14 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   useSidebar,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { PoultrySenseLogo } from "./PoultrySenseLogo";
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { toggleSidebar, state } = useSidebar();
+  const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const navItems = [
@@ -30,16 +31,12 @@ export function AppSidebar() {
   return (
     <div className="flex flex-col h-full">
       <SidebarHeader className="flex items-center justify-between p-2">
-        {!isCollapsed && <PoultrySenseLogo />}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleSidebar}
-          className="md:hidden"
-        >
-          <PanelLeft />
-          <span className="sr-only">Toggle Sidebar</span>
-        </Button>
+        <div className="flex items-center gap-2 [&_span]:animate-in [&_span]:fade-in [&_span]:slide-in-from-left-4">
+          {!isCollapsed && <PoultrySenseLogo />}
+        </div>
+        <div className="hidden md:block">
+          <SidebarTrigger />
+        </div>
       </SidebarHeader>
 
       <SidebarContent>

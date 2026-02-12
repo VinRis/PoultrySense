@@ -26,6 +26,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 export default function HistoryPage() {
   const [history, setHistory] = useLocalStorage<Diagnosis[]>(
@@ -47,7 +48,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <main className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
           <div>
@@ -93,9 +94,9 @@ export default function HistoryPage() {
             </p>
           </div>
         ) : (
-          <Accordion type="single" collapsible className="w-full space-y-2">
+          <Accordion type="single" collapsible className="w-full space-y-4">
             {history.map((diagnosis) => (
-              <AccordionItem value={diagnosis.id} key={diagnosis.id} className="border-b-0">
+              <AccordionItem value={diagnosis.id} key={diagnosis.id} asChild>
                 <Card>
                   <AccordionTrigger className="p-4 hover:no-underline">
                     <div className="flex justify-between items-center w-full">
@@ -121,6 +122,6 @@ export default function HistoryPage() {
           </Accordion>
         )}
       </div>
-    </main>
+    </div>
   );
 }

@@ -18,6 +18,9 @@ export default {
       },
     },
     extend: {
+      boxShadow: {
+        'beautiful': '0 6px 20px -6px hsl(var(--primary) / 0.3), 0 4px 12px -4px hsl(var(--accent) / 0.2)',
+      },
       fontFamily: {
         body: ["var(--font-inter)", ...fontFamily.sans],
         headline: ["var(--font-inter)", ...fontFamily.sans],

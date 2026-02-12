@@ -165,7 +165,7 @@ export default function Home() {
   };
 
   return (
-    <main className="p-4 sm:p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl">
@@ -321,6 +321,6 @@ export default function Home() {
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

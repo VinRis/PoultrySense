@@ -8,6 +8,8 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/app/components/AppSidebar";
+import { ThemeProvider } from "@/app/components/ThemeProvider";
+import { AppHeader } from "./components/AppHeader";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -22,22 +24,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full" suppressHydrationWarning>
       <body
         className={`${inter.variable} font-body antialiased h-full`}
         suppressHydrationWarning
       >
-        <SidebarProvider>
-          <Sidebar>
-            <AppSidebar />
-          </Sidebar>
-          <SidebarInset>
-            <div className="min-h-full">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SidebarProvider>
+            <Sidebar collapsible="icon">
+              <AppSidebar />
+            </Sidebar>
+            <SidebarInset>
+              <AppHeader />
               {children}
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-        <Toaster />
+            </SidebarInset>
+          </SidebarProvider>
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );
