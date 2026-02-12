@@ -104,18 +104,49 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
           <CardDescription>Number of diagnoses over the last 7 days.</CardDescription>
         </CardHeader>
         <CardContent className="p-2 pt-0 sm:p-4 sm:pt-0">
-          <ChartContainer config={chartConfig} className="h-48 w-full sm:h-64">
-            <LineChart accessibilityLayer data={recentActivity} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis dataKey="name" tickLine={false} axisLine={false} tickMargin={8} fontSize={12} />
-              <YAxis tickLine={false} axisLine={false} tickMargin={8} allowDecimals={false} fontSize={12} />
-              <ChartTooltip cursor={true} content={<ChartTooltipContent indicator="line" />} />
-              <Line type="monotone" dataKey="diagnoses" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4, fill: "hsl(var(--primary))" }} activeDot={{ r: 6 }} />
-            </LineChart>
-          </ChartContainer>
+          <div className="overflow-x-auto">
+            <ChartContainer
+              config={chartConfig}
+              className="h-48 w-full sm:h-64 min-w-[320px]"
+            >
+              <LineChart
+                accessibilityLayer
+                data={recentActivity}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  fontSize={12}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  allowDecimals={false}
+                  fontSize={12}
+                />
+                <ChartTooltip
+                  cursor={true}
+                  content={<ChartTooltipContent indicator="line" />}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="diagnoses"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  dot={{ r: 4, fill: "hsl(var(--primary))" }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ChartContainer>
+          </div>
         </CardContent>
       </Card>
-      
+
       <Card>
         <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
           <CardTitle className="text-lg md:text-xl">Top 5 Diseases</CardTitle>
@@ -123,77 +154,129 @@ export function DashboardCharts({ diagnoses }: DashboardChartsProps) {
         </CardHeader>
         <CardContent className="p-4 pt-0 md:p-6 md:pt-0">
           {diseaseFrequency.length > 0 ? (
-            <ChartContainer config={chartConfig} className="h-48 w-full sm:h-64">
-              <BarChart accessibilityLayer data={diseaseFrequency} layout="vertical" margin={{ left: 5, right: 10, top: 10, bottom: 0 }}>
-                <YAxis dataKey="name" type="category" tickLine={false} tickMargin={5} axisLine={false} className="text-xs" tickFormatter={(value) => value.length > 12 ? `${value.substring(0, 12)}...` : value} width={100} interval={0} />
-                <XAxis dataKey="count" type="number" hide />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={4} background={{ fill: "hsl(var(--muted))", radius: 4 }} />
-              </BarChart>
-            </ChartContainer>
+            <div className="overflow-x-auto">
+              <ChartContainer
+                config={chartConfig}
+                className="h-48 w-full sm:h-64 min-w-[320px]"
+              >
+                <BarChart
+                  accessibilityLayer
+                  data={diseaseFrequency}
+                  layout="vertical"
+                  margin={{ left: 5, right: 10, top: 10, bottom: 0 }}
+                >
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tickLine={false}
+                    tickMargin={5}
+                    axisLine={false}
+                    className="text-xs"
+                    tickFormatter={(value) =>
+                      value.length > 12 ? `${value.substring(0, 12)}...` : value
+                    }
+                    width={100}
+                    interval={0}
+                  />
+                  <XAxis dataKey="count" type="number" hide />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Bar
+                    dataKey="count"
+                    fill="hsl(var(--primary))"
+                    radius={4}
+                    background={{ fill: "hsl(var(--muted))", radius: 4 }}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
           ) : (
-            <div className="flex h-48 sm:h-64 items-center justify-center text-muted-foreground">Not enough data to display.</div>
+            <div className="flex h-48 sm:h-64 items-center justify-center text-muted-foreground">
+              Not enough data to display.
+            </div>
           )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
-          <CardTitle className="text-lg md:text-xl">Confidence Breakdown</CardTitle>
-           <CardDescription>Distribution of AI confidence levels.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-2 p-4 pt-2 md:gap-4 md:p-6 md:pt-4">
-            {confidenceDistribution.map(item => (
-                <div key={item.name} className="flex items-center gap-2 md:gap-4">
-                    <span className="font-semibold w-14 text-sm">{item.name}</span>
-                    <div className="flex-1 bg-muted rounded-full h-3 md:h-4 relative">
-                        <div className="h-full rounded-full" style={{ width: `${(item.count / totalDiagnoses) * 100}%`, backgroundColor: item.fill}} />
-                    </div>
-                    <span className="font-mono text-xs md:text-sm text-muted-foreground w-12 text-right">{Math.round((item.count / totalDiagnoses) * 100)}%</span>
-                </div>
-            ))}
         </CardContent>
       </Card>
 
       <Card>
-          <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
-              <CardTitle className="text-lg md:text-xl">Key Metrics</CardTitle>
-              <CardDescription>At-a-glance summary.</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 p-4 pt-2 md:gap-6 md:p-6 md:pt-4">
-              <div className="flex items-center gap-3 md:gap-4">
-                  <div className="p-2 md:p-3 bg-primary/10 rounded-lg text-primary">
-                    <FileText className="h-5 w-5 md:h-6 md:w-6"/>
-                  </div>
-                  <div>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Total Diagnoses</p>
-                      <p className="text-2xl md:text-3xl font-bold">{totalDiagnoses}</p>
-                  </div>
+        <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
+          <CardTitle className="text-lg md:text-xl">
+            Confidence Breakdown
+          </CardTitle>
+          <CardDescription>Distribution of AI confidence levels.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-2 p-4 pt-2 md:gap-4 md:p-6 md:pt-4">
+          {confidenceDistribution.map((item) => (
+            <div key={item.name} className="flex items-center gap-2 md:gap-4">
+              <span className="font-semibold w-14 text-sm">{item.name}</span>
+              <div className="flex-1 bg-muted rounded-full h-3 md:h-4 relative">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${(item.count / totalDiagnoses) * 100}%`,
+                    backgroundColor: item.fill,
+                  }}
+                />
               </div>
-              <div className="flex items-center gap-3 md:gap-4">
-                  <div className="p-2 md:p-3 bg-primary/10 rounded-lg text-primary">
-                    <Activity className="h-5 w-5 md:h-6 md:w-6"/>
-                  </div>
-                  <div>
-                      <p className="text-xs sm:text-sm text-muted-foreground">Most Common Issue</p>
-                      <p className="text-base md:text-lg font-semibold">{mostCommonDisease}</p>
-                  </div>
-              </div>
-          </CardContent>
+              <span className="font-mono text-xs md:text-sm text-muted-foreground w-12 text-right">
+                {Math.round((item.count / totalDiagnoses) * 100)}%
+              </span>
+            </div>
+          ))}
+        </CardContent>
       </Card>
-      
+
       <Card>
-          <CardHeader className="p-4 pb-2 md:p-6 md:pb-2">
-              <CardTitle className="text-lg md:text-xl">AI Assessment Disclaimer</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-start gap-3 p-4 pt-2 md:gap-4 md:p-6 md:pt-0">
-              <div className="p-2 bg-destructive/10 rounded-lg text-destructive mt-1">
-                <AlertTriangle className="h-4 w-4 md:h-5 md:w-5"/>
-              </div>
+        <CardHeader className="p-4 pb-2 md:p-6 md:pb-4">
+          <CardTitle className="text-lg md:text-xl">Key Metrics</CardTitle>
+          <CardDescription>At-a-glance summary.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 p-4 pt-2 md:gap-6 md:p-6 md:pt-4">
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 bg-primary/10 rounded-lg text-primary">
+              <FileText className="h-5 w-5 md:h-6 md:w-6" />
+            </div>
+            <div>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                  The analyses provided are AI-generated and for informational purposes only. Always consult with a qualified veterinarian for a definitive diagnosis.
+                Total Diagnoses
               </p>
-          </CardContent>
+              <p className="text-2xl md:text-3xl font-bold">{totalDiagnoses}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="p-2 md:p-3 bg-primary/10 rounded-lg text-primary">
+              <Activity className="h-5 w-5 md:h-6 md:w-6" />
+            </div>
+            <div>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Most Common Issue
+              </p>
+              <p className="text-base md:text-lg font-semibold">
+                {mostCommonDisease}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="p-4 pb-2 md:p-6 md:pb-2">
+          <CardTitle className="text-lg md:text-xl">
+            AI Assessment Disclaimer
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-start gap-3 p-4 pt-2 md:gap-4 md:p-6 md:pt-0">
+          <div className="p-2 bg-destructive/10 rounded-lg text-destructive mt-1">
+            <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground">
+            The analyses provided are AI-generated and for informational
+            purposes only. Always consult with a qualified veterinarian for a
+            definitive diagnosis.
+          </p>
+        </CardContent>
       </Card>
     </div>
   );
