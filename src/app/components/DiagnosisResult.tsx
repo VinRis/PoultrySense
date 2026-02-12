@@ -15,6 +15,7 @@ import {
   ClipboardList,
   Pill,
   Activity,
+  AlertTriangle,
 } from "lucide-react";
 
 import type { Diagnosis } from "@/lib/types";
@@ -37,6 +38,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type ConfidenceVariant = "default" | "secondary" | "destructive";
 
@@ -165,10 +167,14 @@ export function DiagnosisResult({ diagnosis }: DiagnosisResultProps) {
           >
             {diagnosis.confidenceLevel}
           </Badge>
-          <p className="text-sm text-muted-foreground mt-2">
-            This is an AI-generated assessment. Always consult with a qualified
-            veterinarian for a definitive diagnosis.
-          </p>
+          <Alert variant="destructive" className="mt-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Disclaimer</AlertTitle>
+            <AlertDescription>
+              This is an AI-generated assessment. Always consult with a qualified
+              veterinarian for a definitive diagnosis.
+            </AlertDescription>
+          </Alert>
         </InfoCard>
       </div>
 
