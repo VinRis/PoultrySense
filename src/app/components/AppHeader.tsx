@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutDashboard } from "lucide-react";
+import { PlusSquare, LayoutDashboard } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ export function AppHeader() {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/", label: "New Diagnosis", icon: Home },
-    { href: "/history", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/new-diagnosis", label: "New Diagnosis", icon: PlusSquare },
   ];
 
   return (
