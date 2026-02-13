@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: "A practical diagnostic app for poultry farmers.",
   themeColor: "#22c55e",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export default function RootLayout({
