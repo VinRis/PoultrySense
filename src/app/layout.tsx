@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "PoultrySense AI",
   description: "A practical diagnostic app for poultry farmers.",
   themeColor: "#22c55e",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
